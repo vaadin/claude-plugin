@@ -1,4 +1,4 @@
-# Vaadin Development Plugin
+# Vaadin Claude Plugin
 
 Skills and tools for building high-quality Vaadin 25 applications with Java/Flow.
 
@@ -49,24 +49,24 @@ This plugin includes the Vaadin MCP server, which provides:
 1. Add the marketplace:
 
    ```shell
-   /plugin marketplace add marcushellberg/vaadin-development-plugin
+   /plugin marketplace add vaadin/claude-plugin
    ```
 
 2. Install the plugin:
 
    ```shell
-   /plugin install vaadin-development@marcushellberg-vaadin-development-plugin
+   /plugin install vaadin-claude@vaadin-claude-plugin
    ```
 
-   Or open the plugin manager with `/plugin`, go to the **Discover** tab, and select **vaadin-development** to install interactively.
+   Or open the plugin manager with `/plugin`, go to the **Discover** tab, and select **vaadin-claude** to install interactively.
 
 ### Option 2: Install from local directory
 
 Clone the repository and load it directly:
 
 ```bash
-git clone https://github.com/marcushellberg/vaadin-development-plugin.git
-claude --plugin-dir ./vaadin-development-plugin
+git clone https://github.com/vaadin/claude-plugin.git
+claude --plugin-dir ./claude-plugin
 ```
 
 ## Usage
@@ -86,7 +86,7 @@ The skills and MCP tools activate automatically based on conversation context. A
 If you installed from the marketplace, update by running:
 
 ```shell
-/plugin marketplace update marcushellberg-vaadin-development-plugin
+/plugin marketplace update vaadin-claude-plugin
 ```
 
 Or enable auto-updates in the plugin manager under the **Marketplaces** tab.

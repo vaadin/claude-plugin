@@ -1,5 +1,5 @@
 {
-  "name": "vaadin-development",
+  "name": "vaadin-claude",
   "metadata": {
     "description": "Vaadin 25 development skills and MCP tools for Claude Code"
   },
@@ -8,7 +8,7 @@
   },
   "plugins": [
     {
-      "name": "vaadin-development",
+      "name": "vaadin-claude",
       "source": "./",
       "description": "Skills and tools for building Vaadin 25 applications with Java/Flow — layouts, components, forms, testing, data, and reactive state management"
     }
