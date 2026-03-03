@@ -12,7 +12,45 @@ version: 0.1.0
 
 # Forms with Binder and Validation in Vaadin 25
 
-Use the Vaadin MCP tools (`search_vaadin_docs`, `get_component_java_api`) to look up the latest documentation whenever uncertain about a specific API detail. Always set `vaadin_version` to `"25"` and `ui_language` to `"java"`.
+## Workflow for Creating Forms
+
+When building or reviewing forms, follow this workflow to ensure accuracy. **Prioritize correctness over speed.**
+
+1. **Review Vaadin Documentation First**
+   - Use `search_vaadin_docs` to find relevant form, binder, and validation documentation
+   - Use `get_full_document` to retrieve complete guides on Binder and validation
+   - Use `get_component_java_api` for specific component API details
+   - Always set `vaadin_version` to `"25"` and `ui_language` to `"java"`
+
+2. **Review Reference Materials**
+   - Check `references/form-patterns.md` for established patterns and examples
+   - Review best practices for the specific form type being created
+
+3. **Verify Form Creation Approach**
+   - Confirm Binder mode (buffered vs write-through) matches the use case
+   - Review field binding patterns and validation strategies
+   - Check that converters are properly ordered with validators
+
+4. **Validate Component Selection**
+   - Ensure each field uses the most appropriate Vaadin input component
+   - Review the "Data Entry components" section below for component guidance
+   - Check component API documentation for specific features
+
+5. **Review Validation Strategy**
+   - Verify required field markers are properly set
+   - Check that validation runs at the correct level (field, binding, binder)
+   - Ensure cross-field validation uses binder-level validators
+
+6. **Verify Layout Structure**
+   - Confirm FormLayout responsive steps match requirements
+   - Check field spans and grouping
+   - Ensure error display components are properly configured
+
+**Remember:** Take time to consult documentation thoroughly. Accurate implementation is more important than rapid completion.
+
+## Review Vaadin documentation
+
+ALWAYS use the Vaadin MCP tools (`search_vaadin_docs`, `get_full_document`) to look up the latest documentation. Use (`get_component_java_api`) to look up the documentation for specific API details. Always set `vaadin_version` to `"25"` and `ui_language` to `"java"`.
 
 ## Binder Fundamentals
 
@@ -206,6 +244,30 @@ form.setResponsiveSteps(
 );
 ```
 
+## Data Entry components in Vaadin
+
+Use the appropriate input component for the type of data being entered.
+
+- **Checkbox** is an input field representing a binary choice.
+- **Combo Box** allows the user to choose a value from a filterable list of options presented in an overlay.
+- **Custom Field** is a component for wrapping multiple components as a single field.
+- **Date Picker** is an input field that allows the user to enter a date by typing or by selecting from a calendar overlay.
+- **Date Time Picker** is an input field for selecting both a date and a time.
+- **Email Field** is an extension of Text Field that accepts only email addresses as input.
+- **List Box** allows the user to select one or more values from a scrollable list of items.
+- **Number Field**, **IntegerField** and **BigDecimalField** are input fields that accept only numeric input.
+- **Message Input** allows users to author and send messages.
+- **Multi-Select Combo Box** allows the user to choose one or more values from a filterable list of options presented in an overlay.
+- **Password Field** is an input field for entering passwords.
+- **Radio Button Group** allows users to select one value among multiple choices.
+- **Rich Text Editor** allows the user to author text that has rich formatting.
+- **Select** allows users to choose a single value from a list of options presented in an overlay.
+- **Text Area** is an input field component that allows entry of multiple lines of text.
+- **Text Field** allows users to enter text.
+- **Time Picker** is an input field for used entering or selecting a specific time.
+- **Upload** allows the user to upload files, giving feedback to the user during the upload process.
+
+
 ## Best Practices
 
 1. **Use buffered mode for most forms** — it gives you control over when data is written and lets you implement Cancel without manual state tracking.
@@ -214,6 +276,7 @@ form.setResponsiveSteps(
 4. **Use converters for type safety** — domain primitives with converters catch invalid data at the type system level.
 5. **Set `asRequired()` on mandatory fields** — it provides both the visual indicator and the empty-value check in one call.
 6. **Show binder-level errors prominently** — they don't attach to a specific field, so users need a clear error display area.
+7. **Use components that are optimized for the type of input** — this reduces the need for complex validation and improves UX.
 
 ## Detailed Reference
 
