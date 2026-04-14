@@ -4,250 +4,587 @@ description: >
   Guide Claude on using Vaadin Signals for reactive state management in Vaadin 25 Flow.
   This skill should be used when the user asks to "use signals", "manage state reactively",
   "share state between users", "use reactive state", "use ValueSignal",
-  "use NumberSignal", "use ListSignal", "use computed signals",
-  "use ComponentEffect", "bind signals to components", or needs help with
-  reactive UI updates, signal transactions, signal factories, or
+  "use ListSignal", "use SharedValueSignal", "use SharedNumberSignal",
+  "use SharedListSignal", "use SharedMapSignal", "use SharedNodeSignal",
+  "use local signals", "use shared signals", "use computed signals",
+  "bind signals to components", "bindText", "bindValue", "bindEnabled",
+  "bindVisible", "bindChildren", or needs help with reactive UI updates,
+  signal transactions, signal effects, signal bindings, or
   thread-safe state management in Vaadin Flow.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Reactive State Management with Signals in Vaadin 25
 
-Use the Vaadin MCP tools (`search_vaadin_docs`) to look up the latest documentation whenever uncertain about a specific API detail. Always set `vaadin_version` to `"25"` and `ui_language` to `"java"`.
+Use the Vaadin MCP tools (`search_vaadin_docs`) to look up the latest documentation whenever uncertain about a specific API detail. Always set `vaadin_version` to `"25.1"` and `ui_language` to `"java"`.
 
 ## What Signals Are
 
-Signals are a reactive state management system for Vaadin Flow. A signal holds a value, and when that value changes, all dependent parts of the UI automatically update — without manually adding and removing change listeners.
+Signals are a reactive state management system for Vaadin Flow. A signal holds a value, and when that value changes, all dependent parts of the UI automatically update without manually adding and removing change listeners.
 
 Key properties:
-- **Reactive** — changes propagate automatically to dependent UI
-- **Thread-safe** — designed for concurrent access from multiple users
-- **Immutable values** — signals work best with immutable types (String, Integer, Java Records)
-- **Transactional** — multiple signal updates can be grouped atomically
-- **Hierarchical** — signals can represent complex data structures (lists, maps, trees)
+- **Reactive** -- changes propagate automatically to dependent UI
+- **Automatic dependency tracking** -- effects detect which signals they depend on
+- **Immutable values** -- signals work best with immutable types (String, Integer, Java records)
+- **Thread-safe** -- signals can be updated from any thread without `ui.access()`
+- **Two categories** -- local signals for single-session UI state, shared signals for multi-user/transactional state
 
-## Core Concepts
+## Local vs Shared: Which to Use
 
-### ValueSignal — a single value
+| | Local Signals | Shared Signals |
+|---|---|---|
+| Scope | Single UI instance | Multiple users/sessions |
+| Cluster support | Single server only | Works across cluster |
+| Transactions | No | Yes |
+| Classes | `ValueSignal<T>`, `ListSignal<T>` | `SharedValueSignal<T>`, `SharedNumberSignal`, `SharedListSignal<T>`, `SharedMapSignal<T>`, `SharedNodeSignal` |
+| Package | `com.vaadin.flow.signals.local` | `com.vaadin.flow.signals.shared` |
+
+Use **local signals** when:
+- State is only relevant to a single user's UI session
+- Managing UI state like form visibility, panel expansion, local filters
+- Dynamic lists for a single user (use `ListSignal`)
+
+Use **shared signals** when:
+- Multiple users need to see the same data in real-time
+- You need transactional guarantees for state changes
+- Building collaborative features like live dashboards or multi-user editing
+
+When using shared signals for multi-user scenarios, enable `@Push` so changes propagate immediately to all connected UIs.
+
+## Local Signals
+
+### ValueSignal -- a single value
 
 ```java
-ValueSignal<String> name = new ValueSignal<>(String.class);
-name.value("John");           // set value
-String current = name.value(); // get value
-name.update(n -> n + " Doe"); // atomic update based on current value
+import com.vaadin.flow.signals.local.ValueSignal;
+
+ValueSignal<String> name = new ValueSignal<>("initial value");
+name.set("new value");              // write
+String current = name.peek();       // read (non-reactive, outside effects)
+name.update(n -> n.toUpperCase());  // atomic read-modify-write
+boolean ok = name.replace("OLD", "NEW"); // compare-and-set
 ```
 
-### NumberSignal — numeric values with atomic arithmetic
+Reading values:
+- `get()` -- reactive read, registers dependency. Must only be called inside a reactive context (effect, computed, transaction). Throws `IllegalStateException` outside reactive context.
+- `peek()` -- non-reactive read, no dependency. Use in click listeners, initialization, or any code outside a reactive context.
+
+Custom equality checkers to control when updates are skipped:
 
 ```java
-NumberSignal counter = new NumberSignal();
-counter.value(5);             // set
-counter.incrementBy(1);       // atomic increment
-counter.incrementBy(-2);      // atomic decrement
-int count = counter.valueAsInt();
+ValueSignal<String> name = new ValueSignal<>("John",
+    (a, b) -> a != null && a.equalsIgnoreCase(b));
+name.set("john"); // no update triggered (considered equal)
 ```
 
-### ListSignal — ordered collection
+Read-only view for encapsulation:
 
 ```java
-ListSignal<Person> people = new ListSignal<>(Person.class);
-people.insertFirst(new Person("Jane", 25));
-people.insertLast(new Person("John", 30));
-
-List<ValueSignal<Person>> list = people.value();
-list.get(0).value(new Person("Updated", 26)); // update individual item
+Signal<String> readOnly = name.asReadonly();
 ```
 
-### MapSignal — key-value pairs
+Working with mutable values -- use `modify()`:
 
 ```java
-MapSignal<String> config = new MapSignal<>(String.class);
+ValueSignal<User> userSignal = new ValueSignal<>(new User("Jane", 25));
+userSignal.modify(user -> user.setAge(26)); // correct
+// Do NOT mutate objects directly -- changes won't be detected
+```
+
+Transforming values with `map()`:
+
+```java
+Signal<String> upper = name.map(String::toUpperCase);
+```
+
+### ListSignal -- ordered list with per-entry reactivity
+
+```java
+import com.vaadin.flow.signals.local.ListSignal;
+
+ListSignal<String> tags = new ListSignal<>();
+ValueSignal<String> last = tags.insertLast("item");   // add to end
+ValueSignal<String> first = tags.insertFirst("item");  // add to beginning
+ValueSignal<String> mid = tags.insertAt(1, "middle");  // add at index
+
+tags.remove(last);   // remove specific entry
+tags.clear();        // remove all
+tags.moveTo(first, 2); // reorder without recreating
+
+List<ValueSignal<String>> entries = tags.peek(); // snapshot
+last.set("updated"); // update individual entry (only its dependents re-render)
+```
+
+Each entry is an independent `ValueSignal`, so updating one entry only triggers re-renders for components bound to that entry, not the entire list.
+
+## Shared Signals
+
+### SharedValueSignal -- single value, shared across users
+
+```java
+import com.vaadin.flow.signals.shared.SharedValueSignal;
+
+SharedValueSignal<String> name = new SharedValueSignal<>(String.class);
+name.set("John Doe");
+String current = name.peek();
+name.update(n -> n.toUpperCase());
+name.replace("expected", "newValue");
+```
+
+### SharedNumberSignal -- numeric with atomic arithmetic
+
+```java
+import com.vaadin.flow.signals.shared.SharedNumberSignal;
+
+SharedNumberSignal counter = new SharedNumberSignal();
+counter.set(5);
+counter.incrementBy(1);
+counter.incrementBy(-2);
+int count = counter.getAsInt();
+```
+
+### SharedListSignal -- ordered list, shared across users
+
+```java
+import com.vaadin.flow.signals.shared.SharedListSignal;
+import com.vaadin.flow.signals.shared.SharedListSignal.ListPosition;
+
+SharedListSignal<Person> people = new SharedListSignal<>(Person.class);
+SharedValueSignal<Person> entry = people.insertLast(new Person("Jane", 25)).signal();
+people.insertFirst(new Person("John", 30));
+
+// Precise positioning with ListPosition
+people.insertAt("item", ListPosition.after(entry));
+people.insertAt("item", ListPosition.before(entry));
+people.insertAt("item", ListPosition.first());
+people.insertAt("item", ListPosition.last());
+
+// Reorder
+people.moveTo(entry, ListPosition.first());
+
+// Read
+List<SharedValueSignal<Person>> list = people.peek();
+list.get(0).set(new Person("Updated", 26));
+```
+
+### SharedMapSignal -- key-value pairs with string keys
+
+```java
+import com.vaadin.flow.signals.shared.SharedMapSignal;
+
+SharedMapSignal<String> config = new SharedMapSignal<>(String.class);
 config.put("theme", "dark");
 config.putIfAbsent("language", "en");
+config.remove("language");
 
-Map<String, ValueSignal<String>> map = config.value();
+Map<String, SharedValueSignal<String>> map = config.peek();
+SharedValueSignal<String> themeSignal = map.get("theme");
 ```
 
-### ReferenceSignal — single-UI mutable state
-
-For state used by only one UI instance (not shared). No thread safety overhead, but also no cross-user sharing:
+### SharedNodeSignal -- tree structure (value + list + map children)
 
 ```java
-ReferenceSignal<User> userSignal = new ReferenceSignal<>();
-userSignal.value(new User("Jane", 25));
-userSignal.modify(user -> user.setAge(26)); // mutable update allowed
+import com.vaadin.flow.signals.shared.SharedNodeSignal;
+
+SharedNodeSignal user = new SharedNodeSignal();
+user.putChildWithValue("name", "John Doe");
+user.putChildWithValue("age", 30);
+user.insertChildWithValue("Reading", ListPosition.last());
+
+user.peek().mapChildren().get("name").asValue(String.class).peek(); // "John Doe"
+user.peek().listChildren().getLast().asValue(String.class).peek();  // "Reading"
+
+SharedMapSignal<String> mapChildren = user.asMap(String.class);
 ```
 
-ReferenceSignal cannot be used in transactions.
+## Effects and Computed Signals
 
-## Effects — Reactive UI Updates
-
-Effects are callbacks that re-run automatically when any signal they read changes. They are the bridge between signals and the UI.
-
-### ComponentEffect.effect — bind to a component's lifecycle
+### Effects -- reactive callbacks tied to component lifecycle
 
 ```java
-ComponentEffect.effect(span, () -> {
-    span.setText(firstName.value() + " " + lastName.value());
+Signal.effect(component, () -> {
+    // Re-runs automatically when any signal read with get() changes
+    // Active while component is attached, inactive while detached
+    System.out.println("Name: " + firstName.get() + " " + lastName.get());
 });
 ```
 
-The effect:
-- Automatically tracks which signals are read inside the callback
-- Re-runs when any of those signals change
-- Is active only while the component is attached to the UI
-- Cleans up automatically when the component is detached
-
-### ComponentEffect.bind — shorthand for simple bindings
+Returns a `Registration` that can be used to remove the effect:
 
 ```java
-ComponentEffect.bind(label, nameSignal, Span::setText);
-ComponentEffect.bind(button, enabledSignal, Button::setEnabled);
-ComponentEffect.bind(div, visibleSignal, Div::setVisible);
+Registration reg = Signal.effect(component, () -> { ... });
+reg.remove(); // stop the effect
 ```
 
-Equivalent to `ComponentEffect.effect` but more concise for single-signal, single-property bindings.
-
-### Computed Signals — derived values
-
-Computed signals derive their value from other signals and update automatically:
+Contextual effects with `EffectContext`:
 
 ```java
-Signal<String> fullName = Signal.computed(() -> {
-    return firstName.value() + " " + lastName.value();
+Signal.effect(component, ctx -> {
+    String value = priceSignal.get();
+    span.setText("$" + value);
+    if (!ctx.isInitialRun() && ctx.isBackgroundChange()) {
+        span.getElement().flashClass("highlight");
+    }
 });
 ```
 
-### Signal Mapping — transform a single signal
-
-Shorthand for a computed that depends on exactly one signal:
+Standalone effects (not tied to a component -- must clean up manually):
 
 ```java
-Signal<String> ageCategory = ageSignal.map(age ->
-    age < 18 ? "Child" : (age < 65 ? "Adult" : "Senior")
-);
+Registration cleanup = Signal.unboundEffect(() -> {
+    System.out.println("Counter: " + counter.get());
+});
+cleanup.remove(); // required to avoid memory leaks
 ```
 
-## Signal Factory
-
-Use `SignalFactory` to create signal instances. The factory determines how signals are scoped:
-
-### IN_MEMORY_SHARED — shared across the application
-
-Same signal instance for the same name within the same JVM. Use for state visible to all users:
+### Computed signals -- derived values
 
 ```java
-NumberSignal globalCounter = SignalFactory.IN_MEMORY_SHARED.number("counter");
-ValueSignal<String> sharedMessage = SignalFactory.IN_MEMORY_SHARED.value("msg", String.class);
-NodeSignal sharedData = SignalFactory.IN_MEMORY_SHARED.node("data");
+Signal<String> fullName = Signal.computed(() ->
+    firstName.get() + " " + lastName.get());
 ```
 
-### IN_MEMORY_EXCLUSIVE — per-instance
+Computed signals are read-only, cached, and recalculate only when dependencies change.
 
-Always creates a new instance. Use for component-local state:
+### Signal.not() -- negate a boolean signal
 
 ```java
-NumberSignal localCounter = SignalFactory.IN_MEMORY_EXCLUSIVE.number("counter");
+Signal<Boolean> notLoading = Signal.not(loading);
 ```
+
+### peek() inside effects -- read without tracking
+
+```java
+Signal.effect(component, () -> {
+    String name = nameSignal.get();   // tracked dependency
+    int count = countSignal.peek();   // NOT tracked, effect won't re-run for this
+});
+```
+
+### Signal.untracked() -- block of code without tracking
+
+```java
+Signal.effect(component, () -> {
+    String tracked = trackedSignal.get();
+    Signal.untracked(() -> {
+        String notTracked = anotherSignal.get(); // not tracked
+    });
+});
+```
+
+## Component and Element Bindings
+
+### Component-level bindings
+
+**Text binding:**
+
+```java
+span.bindText(nameSignal);
+span.bindText(counter.map(c -> String.format("Count: %.0f", c)));
+span.bindText(() -> firstName.get() + " " + lastName.get()); // lambda variant
+```
+
+HTML components (`Span`, `Paragraph`, `H1`--`H6`) also accept signals in constructors:
+
+```java
+Paragraph p = new Paragraph(signal); // shorthand for new + bindText
+```
+
+**Visibility binding:**
+
+```java
+detailsPanel.bindVisible(showDetails);
+noResults.bindVisible(searchText.map(String::isEmpty));
+```
+
+**Enabled state binding:**
+
+```java
+submitButton.bindEnabled(formValid);
+submitButton.bindEnabled(Signal.computed(() ->
+    !email.get().isEmpty() && password.get().length() >= 8));
+```
+
+**Two-way form field binding:**
+
+```java
+TextField field = new TextField("Name");
+field.bindValue(nameSignal, nameSignal::set);
+// User types -> signal updates; signal changes -> field updates
+```
+
+Works with all `HasValue` fields: `TextField`, `TextArea`, `Checkbox`, `NumberField`, `ComboBox`, `DatePicker`, etc.
+
+**Two-way binding to record properties:**
+
+```java
+record Todo(String text, boolean done) {
+    Todo withDone(boolean done) { return new Todo(this.text, done); }
+}
+
+ValueSignal<Todo> todoSignal = new ValueSignal<>(new Todo("Write docs", false));
+
+Checkbox checkbox = new Checkbox();
+checkbox.bindValue(todoSignal.map(Todo::done), todoSignal.updater(Todo::withDone));
+```
+
+**Two-way binding to mutable bean properties:**
+
+```java
+TextField nameField = new TextField("Name");
+nameField.bindValue(userSignal.map(User::getName), userSignal.modifier(User::setName));
+```
+
+**Read-only, required indicator, placeholder, helper text:**
+
+```java
+field.bindReadOnly(lockedSignal);
+field.bindRequiredIndicatorVisible(requiredSignal);
+field.bindPlaceholder(placeholderSignal);
+field.bindHelperText(remaining.map(r -> r + " characters remaining"));
+```
+
+**Dynamic children from list signal:**
+
+```java
+container.bindChildren(items, itemSignal -> {
+    Span itemView = new Span();
+    itemView.bindText(itemSignal);
+    return itemView;
+});
+```
+
+The factory runs once per item. Adding/removing items only affects those items. Reordering moves components, not recreates them. Updating an entry value updates only that entry's bindings.
+
+**Binding items to data components (Grid, ComboBox):**
+
+```java
+Signal.effect(grid, () -> grid.setItems(items.getValues().toList()));
+```
+
+**Size, class names, themes, styles:**
+
+```java
+panel.bindWidth(widthSignal);
+panel.bindHeight(heightSignal);
+panel.bindClassName("highlighted", highlightedSignal);
+panel.bindClassNames(classListSignal);
+panel.bindThemeName("compact", compactSignal);
+layout.getThemeList().bind("dark", darkModeSignal);
+panel.getStyle().bind("background-color", bgColorSignal);
+```
+
+**Change callbacks on bindings:**
+
+```java
+span.bindText(priceSignal.map(p -> "$" + p))
+    .onChange(ctx -> {
+        if (ctx.isBackgroundChange()) {
+            ctx.getElement().flashClass("highlight");
+        }
+    });
+```
+
+### Element-level bindings
+
+For custom components or fine-grained DOM control:
+
+```java
+element.bindText(signal);
+element.bindAttribute("aria-label", labelSignal);
+element.bindProperty("hidden", hiddenSignal, null);       // read-only
+element.bindProperty("hidden", hiddenSignal, hiddenSignal::set); // two-way
+element.bindVisible(visibleSignal);
+element.bindEnabled(enabledSignal);
+element.getClassList().bind("active", isActiveSignal);
+element.getClassList().bind(classListSignal);              // group binding
+element.getStyle().bind("color", colorSignal);
+element.flashClass("highlight");                           // trigger CSS animation
+```
+
+While a signal is bound to an element property, manual changes to that property throw `BindingActiveException`. Unbind with `bindText(null)`, `bindProperty(null)`, etc.
+
+## Signal Scope Patterns
+
+### View-scoped (per component instance)
+
+Declare signals as private instance fields. Each navigation creates a new instance:
+
+```java
+@Route("dashboard")
+public class DashboardView extends VerticalLayout {
+    private final ValueSignal<Integer> counter = new ValueSignal<>(0);
+    // ...
+}
+```
+
+### Session-scoped
+
+Use `@Component @VaadinSessionScope` beans. One instance per HTTP session, shared across tabs:
+
+```java
+@Component
+@VaadinSessionScope
+public class UserPreferences {
+    private final ValueSignal<String> theme = new ValueSignal<>("light");
+
+    public ValueSignal<String> getThemeSignal() { return theme; }
+}
+```
+
+### Application-scoped (global)
+
+Use `@Component` (singleton) beans. Shared by all users:
+
+```java
+@Component
+public class SystemStatus {
+    private final SharedValueSignal<String> status = new SharedValueSignal<>(String.class);
+
+    public Signal<String> getStatus() { return status.asReadonly(); }
+    public void setStatus(String s) { status.set(s); }
+}
+```
+
+| Scope | Declaration | Lifetime |
+|---|---|---|
+| View | Private instance field | View instance lifetime, new per navigation |
+| Session | `@Component @VaadinSessionScope` bean | HTTP session lifetime |
+| Application | `@Component` (singleton) bean or static field | Application lifetime, shared by all users |
 
 ## Transactions
 
-Group multiple signal updates into an atomic operation. Observers see either all changes or none:
+Transactions group multiple shared signal operations into a single atomic unit. Observers see all changes or none:
 
 ```java
 Signal.runInTransaction(() -> {
-    firstName.value("John");
-    lastName.value("Doe");
-    age.value(30);
+    firstNameSignal.set("John");
+    lastNameSignal.set("Doe");
+    ageSignal.set(30);
 });
 ```
 
-## Element Binding
-
-Signals can bind directly to `Element` properties, attributes, text, classes, and styles:
-
-### Text binding
+Verification methods for conditional updates:
 
 ```java
-Signal<String> text = counter.map(v -> String.format("Count: %.0f", v));
-span.getElement().bindText(text);
+Signal.runInTransaction(() -> {
+    statusSignal.verifyValue("pending");
+    statusSignal.set("processing");
+});
 ```
 
-### Property binding
+Transactions can return values:
 
 ```java
-span.getElement().bindProperty("hidden", hiddenSignal);
+TransactionOperation<String> txOp = Signal.runInTransaction(() -> {
+    statusSignal.verifyValue("pending");
+    statusSignal.set("confirmed");
+    return "Order confirmed";
+});
+String result = txOp.returnValue();
 ```
 
-Supports String, Boolean, Double, JSON, Object (bean), List, and Map types.
-
-### Attribute binding
-
-```java
-span.getElement().bindAttribute("hidden",
-    hiddenSignal.map(h -> h ? "" : null));
-```
-
-### Class binding
-
-```java
-span.getElement().getClassList().bind("active", isActiveSignal);
-```
-
-### Style binding
-
-```java
-span.getElement().getStyle().bind("color", colorSignal);
-```
-
-**Important:** while a signal is bound to an element property, manual changes to that property throw `BindingActiveException`. Unbind first with `bindText(null)`, `bindProperty(null)`, etc.
+**Local signals (`ValueSignal`, `ListSignal`) cannot participate in transactions.** Using local signals inside `runInTransaction()` throws an exception. Use shared signals if you need transactional guarantees.
 
 ## Complete Example: Shared Counter
 
 ```java
+@Push
 public class SharedCounter extends VerticalLayout {
-    private final NumberSignal counter =
-            SignalFactory.IN_MEMORY_SHARED.number("counter");
+    private final SharedNumberSignal counter = new SharedNumberSignal();
 
     public SharedCounter() {
         Button button = new Button();
         button.addClickListener(click -> counter.incrementBy(1));
+        button.bindText(counter.map(c -> String.format("Clicked %.0f times", c)));
         add(button);
-
-        ComponentEffect.effect(button,
-            () -> button.setText(
-                String.format("Clicked %.0f times", counter.value())));
     }
 }
 ```
 
-All users see the same counter value, and clicking in any browser updates all connected UIs (requires Push to be enabled).
+All users see the same counter value. Clicking in any browser updates all connected UIs. Requires `@Push` on `AppShellConfigurator`.
+
+## Complete Example: Local Todo List
+
+```java
+public class TodoList extends VerticalLayout {
+    record Todo(String text, boolean done) {
+        Todo withDone(boolean done) { return new Todo(this.text, done); }
+    }
+
+    private final ListSignal<Todo> todos = new ListSignal<>();
+    private final ValueSignal<String> newTaskText = new ValueSignal<>("");
+
+    public TodoList() {
+        TextField input = new TextField("New todo");
+        input.bindValue(newTaskText, newTaskText::set);
+
+        Button addBtn = new Button("Add");
+        addBtn.bindEnabled(newTaskText.map(t -> !t.isBlank()));
+        addBtn.addClickListener(e -> {
+            todos.insertLast(new Todo(newTaskText.peek(), false));
+            newTaskText.set("");
+        });
+
+        VerticalLayout list = new VerticalLayout();
+        list.setPadding(false);
+
+        list.bindChildren(todos, todoSignal -> {
+            HorizontalLayout row = new HorizontalLayout();
+            row.setAlignItems(FlexComponent.Alignment.CENTER);
+
+            Checkbox checkbox = new Checkbox();
+            checkbox.bindValue(
+                todoSignal.map(Todo::done),
+                todoSignal.updater(Todo::withDone));
+
+            Span text = new Span();
+            text.bindText(todoSignal.map(Todo::text));
+            text.getStyle().bind("text-decoration",
+                todoSignal.map(t -> t.done() ? "line-through" : "none"));
+
+            Button deleteBtn = new Button("Delete",
+                e -> todos.remove(todoSignal));
+
+            row.add(checkbox, text, deleteBtn);
+            return row;
+        });
+
+        add(new HorizontalLayout(input, addBtn), list);
+    }
+}
+```
 
 ## Best Practices
 
-1. **Use immutable values** — Strings, primitives, Java Records. Mutating an object directly won't trigger reactivity. Always create a new value:
+1. **Use immutable values** -- Strings, primitives, Java records. Mutating an object directly won't trigger reactivity. Always create a new value with `update()`, or use `modify()` for mutable beans:
 
    ```java
-   // GOOD: new immutable object
-   user.update(u -> new User(u.getName(), u.getAge() + 1));
+   // GOOD: new immutable record
+   user.update(u -> new User(u.name(), u.age() + 1));
 
-   // BAD: mutating in place (won't trigger updates!)
-   User u = user.value();
-   u.setAge(u.getAge() + 1);
+   // GOOD: modify() for mutable beans
+   userSignal.modify(u -> u.setAge(26));
+
+   // BAD: mutating in place without modify()
+   User u = user.peek();
+   u.setAge(u.getAge() + 1); // change not detected
    ```
 
-2. **Use `ComponentEffect.effect` for UI bindings** — it handles lifecycle (attach/detach) automatically, preventing memory leaks.
+2. **Prefer direct bindings over effects** -- `bindText()`, `bindVisible()`, `bindEnabled()`, `bindValue()` are more concise and efficient than writing a full `Signal.effect()` for simple property bindings.
 
-3. **Use `ComponentEffect.bind` for simple one-signal bindings** — cleaner than writing a full effect for `label.setText(signal.value())`.
+3. **Use `peek()` outside reactive contexts** -- In click listeners, initialization code, or anywhere outside an effect/computed, use `peek()`. Using `get()` outside a reactive context throws `IllegalStateException`.
 
-4. **Use transactions for multi-signal updates** — prevents observers from seeing partial state.
+4. **Use transactions for multi-signal atomic updates** (shared signals only) -- prevents observers from seeing partial state.
 
-5. **Use `update()` for atomic read-modify-write** — `counter.update(c -> c + 1)` is atomic; reading and then setting is not.
+5. **Use `update()` for atomic read-modify-write** -- `counter.update(c -> c + 1)` is atomic; reading and then setting is not.
 
-6. **Don't modify signals inside effects or computed callbacks** — they run in read-only transactions. If you must, use `Signal.runWithoutTransaction()`, but be very careful about infinite loops.
+6. **Don't modify signals inside effects or computed callbacks** -- they run in read-only transactions. If you must, use `Signal.runWithoutTransaction()`, but beware of infinite loops.
 
-7. **Use `peek()` to read without tracking** — inside an effect, `signal.peek()` reads the value without creating a dependency, so the effect won't re-run when that signal changes.
+7. **Use `peek()` inside effects to read without tracking** -- `signal.peek()` reads the value without creating a dependency.
 
-8. **Enable Push for shared signals** — when using `IN_MEMORY_SHARED`, enable server push so changes propagate immediately to all connected UIs.
+8. **Enable `@Push` for shared signals** -- when multiple users share signals, enable server push so changes propagate immediately.
 
-9. **Prefer `ReferenceSignal` for single-UI mutable state** — no thread-safety overhead when state doesn't need to be shared.
+9. **Store signals as class fields** -- keep all reactive state together at the top of the class for clarity. Computed signals can be declared alongside their sources.
+
+10. **Local signals cannot participate in transactions** -- use shared signals if you need `runInTransaction()`.

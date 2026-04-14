@@ -46,7 +46,15 @@ public class CustomersView extends VerticalLayout {
 
 ### Path Derivation
 
-If you omit the `@Route` value, Vaadin derives the path from the class name, stripping a `View` suffix and converting to kebab-case. `CustomerListView` becomes `customer-list`. Use an explicit path to avoid surprises.
+If you omit the `@Route` value, Vaadin derives the path from the class name: the name is converted to lower case and a trailing `View` suffix is removed. Special case: `MainView` and `Main` are mapped to root (`""`).
+
+Examples:
+- `MyEditor` -> `"myeditor"`
+- `PersonView` -> `"person"`
+- `CustomerListView` -> `"customerlist"`
+- `MainView` -> `""`
+
+Use an explicit path to avoid surprises.
 
 An empty `@Route("")` maps to the application root.
 

@@ -417,29 +417,31 @@ For Aura, use CSS classes with Aura's surface system instead of `LumoUtility`:
 
 ### Status badges
 
+Badge is a preview feature in Vaadin 25.1 — enable it with the `badgeComponent` feature flag. Available variants: `SUCCESS`, `WARNING`, `ERROR`, `FILLED`, `ICON_ONLY`, `NUMBER_ONLY`.
+
 ```java
-public static Span createBadge(String text, BadgeVariant variant) {
-    Span badge = new Span(text);
-    badge.getElement().getThemeList().add("badge " + variant.theme);
-    return badge;
-}
+// Badge component (Vaadin 25.1+ preview — requires badgeComponent feature flag)
+Badge pending = new Badge("Pending");
 
-public enum BadgeVariant {
-    DEFAULT(""),
-    SUCCESS("success"),
-    ERROR("error"),
-    WARNING("warning"),
-    CONTRAST("contrast"),
-    PRIMARY("primary"),
-    PILL("pill"),
-    SMALL("small");
+Badge confirmed = new Badge("Confirmed");
+confirmed.addThemeVariants(BadgeVariant.SUCCESS);
 
-    final String theme;
-    BadgeVariant(String theme) { this.theme = theme; }
-}
+Badge warning = new Badge("Warning");
+warning.addThemeVariants(BadgeVariant.WARNING);
+
+Badge denied = new Badge("Denied");
+denied.addThemeVariants(BadgeVariant.ERROR);
+
+// With icon
+Badge iconBadge = new Badge("Confirmed", VaadinIcon.CHECK.create());
+iconBadge.addThemeVariants(BadgeVariant.SUCCESS);
+
+// With number
+Badge counter = new Badge("Inbox", 12);
+counter.addThemeVariants(BadgeVariant.FILLED);
 ```
 
-Combine variants: `"badge success small pill"` for a small success pill badge. Badges work with both Aura and Lumo.
+For Vaadin versions before 25.1, badges can be created with `Span` elements using the `theme="badge"` attribute, but this approach is deprecated.
 
 ### Data-dense dashboard layout (Lumo utility classes)
 
@@ -453,16 +455,20 @@ dashboard.addClassNames(
     LumoUtility.Background.CONTRAST_5
 );
 
-// Metric cards row
-HorizontalLayout metrics = new HorizontalLayout();
-metrics.setWidthFull();
-metrics.addClassNames(LumoUtility.Gap.MEDIUM);
-metrics.add(
+// Metric cards grid — uses CSS Grid for responsive layout
+Div metrics = new Div(
     createCard("Revenue", "$48,200", "+12% from last month"),
     createCard("Users", "1,420", "+5% from last month"),
     createCard("Orders", "384", "+8% from last month")
 );
-metrics.getChildren().forEach(c -> ((HasSize) c).setWidthFull());
+metrics.addClassName("metrics-grid");
+// Companion CSS:
+// .metrics-grid {
+//     display: grid;
+//     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+//     gap: var(--lumo-space-m);
+//     width: 100%;
+// }
 
 dashboard.add(createSectionHeader("Overview"), metrics);
 ```

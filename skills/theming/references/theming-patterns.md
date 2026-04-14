@@ -163,19 +163,23 @@
 | Align center | — | `LUMO_ALIGN_CENTER` |
 | Align right | — | `LUMO_ALIGN_RIGHT` |
 
-### Badge (theme attribute — works with both themes)
-| Theme | Effect |
-|-------|--------|
-| `badge` | Default badge |
-| `badge success` | Green/success badge |
-| `badge error` | Red/error badge |
-| `badge warning` | Yellow/warning badge |
-| `badge contrast` | High-contrast badge |
-| `badge primary` | Primary color badge |
-| `badge pill` | Rounded pill shape |
-| `badge small` | Smaller sizing |
+### Badge Component (Vaadin 25.1+)
 
-Combine: `"badge success small pill"`
+Badge is now a proper component (preview feature, requires `badgeComponent` feature flag):
+
+| Variant | Effect |
+|---------|--------|
+| _(default)_ | Neutral badge |
+| `BadgeVariant.SUCCESS` | Green/success |
+| `BadgeVariant.ERROR` | Red/error |
+| `BadgeVariant.WARNING` | Yellow/warning |
+| `BadgeVariant.FILLED` | Filled background |
+| `BadgeVariant.ICON_ONLY` | Icon without text (text still needed for accessibility) |
+| `BadgeVariant.NUMBER_ONLY` | Number display only |
+
+Use `badge.addThemeVariants(BadgeVariant.SUCCESS)`. Combine variants: `badge.addThemeVariants(BadgeVariant.SUCCESS, BadgeVariant.FILLED)`.
+
+> **Deprecated:** The theme-attribute approach (`theme="badge success"` on `Span`) from earlier Vaadin versions is deprecated. Use the `Badge` component instead.
 
 ## Theme Setup Recipes
 

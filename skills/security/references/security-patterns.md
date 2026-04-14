@@ -11,6 +11,8 @@
 
 > `@AnonymousAllowed` is Vaadin-specific (`com.vaadin.flow.server.auth`). The rest are Jakarta annotations (`jakarta.annotation.security`). `@Secured` and `@PreAuthorize` are **not supported** on Vaadin views.
 
+> **Vaadin-specific behavior:** In standard Jakarta Security, `@PermitAll` allows all callers including unauthenticated ones. Vaadin overrides this: `@PermitAll` requires authentication. Use `@AnonymousAllowed` for truly public access.
+
 ## Annotation Resolution Rules
 
 | Rule | Behavior |
