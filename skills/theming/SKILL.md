@@ -252,7 +252,7 @@ Aura computes spacing and sizing from core properties:
 
 ```css
 html {
-    --aura-base-size: 16;     /* unitless, range 12–24, controls gap/padding, should ideally be disible by 4 */
+    --aura-base-size: 16;     /* unitless, range 12–24, controls gap/padding, should ideally be divisible by 4 */
     --aura-base-radius: 6;    /* unitless, range 0–8, controls border radius */
 }
 ```
@@ -453,7 +453,7 @@ public class Application implements AppShellConfigurator {
 1. **Mixing theme tokens** — using `--aura-*` properties in a Lumo app or `--lumo-*` in an Aura app. These properties don't exist in the other theme and will have no effect.
 2. **Using `LumoUtility` with Aura** — utility classes only work with the Lumo theme. With Aura, use custom CSS classes or inline styles.
 3. **Hardcoding colors and sizes** — breaks dark mode and makes theme changes impossible. Always use the active theme's properties.
-4. **Using `@CssImport`** — this annotation is removed in Vaadin 25. Use `@StyleSheet` instead.
+4. **Using `@CssImport`** — this annotation is discouraged in Vaadin 25. Use `@StyleSheet` instead.
 5. **Loading theme after app styles** — theme stylesheets must come first in `@StyleSheet` ordering.
 
 ## Detailed Reference
