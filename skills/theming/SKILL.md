@@ -21,15 +21,15 @@ Vaadin 25 ships two fully supported themes — **Aura** and **Lumo**. They diffe
 |--------|------|------|
 | Visual style | Modern, uses transparencies and gradients | Classic, clean and flat |
 | Customization model | Few core properties, computed variations | Many individual tokens, granular control |
-| Color system | 7-color palette, auto-computed variants | Semantic color scales with explicit opacity variants |
-| Font sizing | Single `--aura-base-font-size`, computed scale | Individual `--lumo-font-size-*` tokens |
-| Spacing/sizing | Single `--aura-base-size`, computed gaps/padding | Individual `--lumo-space-*` tokens |
-| Border radius | Single `--aura-base-radius`, computed | Individual `--lumo-border-radius-*` tokens |
+| Color system | 7-color palette, auto-computed variants, dynamic accent color | Semantic color scales with explicit opacity variants |
+| Font sizing | Single `--aura-base-font-size` and individual `--aura-font-size-*`tokens | Individual `--lumo-font-size-*` tokens |
+| Spacing/sizing | Single `--aura-base-size` and individual `--vaadin-padding-*` and `--vaadin-gap-*` properties | Individual `--lumo-space-*` tokens |
+| Border radius | Single `--aura-base-radius` and individual `--vaadin-radius-*` tokens | Individual `--lumo-border-radius-*` tokens |
 | Utility classes | None | `LumoUtility.*` (Tailwind-like) |
-| Dark mode | `color-scheme: light dark` (CSS native) | `[theme~="dark"]` selector |
-| Elevation | Surface level system (`--aura-surface-level`) | Explicit shadow tokens (`--lumo-box-shadow-*`) |
+| Dark mode | `color-scheme: light dark` (CSS native) | `color-scheme: light dark` (CSS native) |
+| Elevation | Surface level system (`--aura-surface-level`) and shadow tokens (`--aura-shadow-*`) | Explicit shadow tokens (`--lumo-box-shadow-*`) |
 
-**Choose Aura** when you want a modern look with minimal configuration — change a few core properties and the entire app adapts. Good for rapid prototyping and apps where broad visual consistency matters more than pixel-level control.
+**Choose Aura** when you want a modern look with minimal configuration — change a few core properties and the entire app adapts. Good for rapid prototyping and apps where broad visual consistency matters more than pixel-level control. You can still have fine-grained control over individual design tokens, if needed. Good for data-heavy enterprise apps.
 
 **Choose Lumo** when you need fine-grained control over individual design tokens, want to use utility classes from Java, or need the compact/dense theme preset. Good for data-heavy enterprise apps and when you want Tailwind-like styling from Java.
 
@@ -73,12 +73,11 @@ There is no utility class stylesheet for Aura. `Lumo.UTILITY_STYLESHEET` only wo
 
 ### Aura Color System
 
-Aura has a 7-color palette: **neutral**, **red**, **orange**, **yellow**, **green**, **blue**, **purple**. Each is a single value from which text, border, and surface variants are computed automatically.
+Aura has a 7-color palette: **neutral**, **red**, **orange**, **yellow**, **green**, **blue**, **purple**. Each is a single value from which text, border, and surface variants are computed automatically. The neutral color is color-scheme dependent and is computed based on the `--aura-background-color-light` and `--aura-background-color-dark` tokens.
 
 ```css
 html {
     /* Override palette colors */
-    --aura-neutral: #6b7280;
     --aura-red: #ef4444;
     --aura-green: #22c55e;
     --aura-blue: #3b82f6;
@@ -88,16 +87,26 @@ html {
 }
 ```
 
+Certain palette colors are used for the built-in component variants (e.g., buttons, badges, notifications). They work on any component that uses the accent color:
+
+- `info` variant -> blue accent color
+- `error` variant -> red accent color
+- `success` variant -> green accent color
+- `warning` variant -> yellow accent color
+
 **Accent color** — the primary action color. Applied per-component or globally:
 
 ```css
 html {
-    --aura-accent-color: #3b82f6;  /* global accent */
+    /* Global accent color. You need to override it separately for ligth and dark color schemes */
+    --aura-accent-color-light: #3b82f6;
+    --aura-accent-color-dark: #3b82f6;
 }
 
 /* Or per-component */
 vaadin-button {
-    --aura-accent-color: #42C556;
+    --aura-accent-color-light: #42C556;
+    --aura-accent-color-dark: #42C556; 
 }
 ```
 
@@ -151,9 +160,9 @@ public class Application implements AppShellConfigurator {
 
 Values: `LIGHT` (default), `DARK`, `LIGHT_DARK` (follows OS preference).
 
-### Aura Dark Mode
+Both themes use the native CSS `color-scheme` property. The `LIGHT_DARK` value maps to `color-scheme: light dark`, which automatically follows the user's OS preference.
 
-Aura uses the native CSS `color-scheme` property. The `LIGHT_DARK` value maps to `color-scheme: light dark`, which automatically follows the user's OS preference.
+### Aura Dark Mode
 
 Aura color properties have `-light` and `-dark` suffixed variants. If you customize colors and support both schemes, override both:
 
@@ -168,20 +177,14 @@ html {
 
 ### Lumo Dark Mode
 
-Lumo uses the `[theme~="dark"]` selector:
+With Lumo, use the native `light-dark()` function to support both color schemes when customizing the colors:
 
 ```css
-[theme~="dark"] {
-    --lumo-base-color: hsl(220, 20%, 12%);
-    --lumo-primary-color: hsl(220, 85%, 65%);
-    --lumo-body-text-color: hsla(0, 0%, 100%, 0.9);
+html {
+    --lumo-base-color: light-dark(hsl(220, 20%, 92%), hsl(220, 20%, 12%));
+    --lumo-primary-color: light-dark(hsl(220, 85%, 55%), hsl(220, 85%, 65%));
+    --lumo-body-text-color: light-dark(hsla(0, 0%, 0%, 0.9), hsla(0, 0%, 100%, 0.9));
 }
-```
-
-Enable dark mode programmatically:
-
-```java
-UI.getCurrent().getElement().getThemeList().add("dark");
 ```
 
 ## Typography
@@ -193,12 +196,18 @@ Aura computes a full type scale from a single base value:
 ```css
 html {
     --aura-font-family: 'Your Font', sans-serif;
-    --aura-base-font-size: 16;      /* unitless number, represents px */
+    --aura-base-font-size: 16;      /* unitless number, represents px, maps directly to `--aura-font-size-m` */
     --aura-base-line-height: 1.5;   /* unitless, relative to font size */
 }
 ```
 
-This computes `--aura-font-size-xs` through `--aura-font-size-xl` and corresponding line heights automatically. Aura also supports dynamic font sizing on iOS/iPadOS.
+This computes `--aura-font-size-xs` through `--aura-font-size-xl` and corresponding line heights automatically. You can override the individual font-size tokens explicitly, if needed.
+
+html {
+    --aura-font-size-xs: 0.625rem;
+}
+
+Aura also supports dynamic font sizing on iOS/iPadOS.
 
 ### Lumo Typography
 
@@ -243,12 +252,14 @@ Aura computes spacing and sizing from core properties:
 
 ```css
 html {
-    --aura-base-size: 16;     /* unitless, range 12–24, controls gap/padding */
-    --aura-base-radius: 6;    /* unitless, range 0–10, controls border radius */
+    --aura-base-size: 16;     /* unitless, range 12–24, controls gap/padding, should ideally be disible by 4 */
+    --aura-base-radius: 6;    /* unitless, range 0–8, controls border radius */
 }
 ```
 
-These compute the shared `--vaadin-gap`, `--vaadin-padding`, and radius properties automatically.
+These compute the shared `--vaadin-gap`, `--vaadin-padding`, and `--vaadin-radius` properties automatically. If needed, you can override those individual tokens explicitly.
+
+Aura has built-in `theme="xsmall", `theme="small"`, `theme="large"` and `theme="xlarge"` variants that change the base-size and base-font-size accordingly. They work on all components and layouts. They are useful if you want a certain part of you UI to be more compact.
 
 ### Lumo
 
@@ -283,43 +294,31 @@ card.addClassNames(
 
 ## Component Theme Variants
 
-Both themes provide style variants via `addThemeVariants()`. The variant constants are prefixed with the theme name (`AURA_` or `LUMO_`).
+Both themes provide style variants via `addThemeVariants()`.
 
 ```java
-// Aura theme
-button.addThemeVariants(ButtonVariant.AURA_PRIMARY);
-
-// Lumo theme
-button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+button.addThemeVariants(ButtonVariant.PRIMARY);
 ```
 
 Not all variants are available in both themes. Check the component documentation for which variants each theme supports. Common examples:
 
 | Variant | Aura | Lumo |
 |---------|------|------|
-| Button: primary | `AURA_PRIMARY` | `LUMO_PRIMARY` |
-| Button: tertiary | `AURA_TERTIARY` | `LUMO_TERTIARY` |
+| Button: primary | `PRIMARY` | `PRIMARY` |
+| Button: tertiary | `TERTIARY` | `TERTIARY` |
 | Button: tertiary-inline | — | `LUMO_TERTIARY_INLINE` |
-| Button: small/large | — | `LUMO_SMALL` / `LUMO_LARGE` |
+| Button: small/large | `SMALL` / `LARGE` | `SMALL` / `LARGE` |
 | Button: icon | — | `LUMO_ICON` |
-| Button: success | `AURA_SUCCESS` | `LUMO_SUCCESS` |
-| Button: error | `AURA_ERROR` | `LUMO_ERROR` |
-| Button: warning | `AURA_WARNING` | `LUMO_WARNING` |
+| Button: success | `SUCCESS` | `SUCCESS` |
+| Button: error | `ERROR` | `ERROR` |
+| Button: warning | `WARNING` | `WARNING` |
 | Button: contrast | — | `LUMO_CONTRAST` |
-| Grid: no border | `AURA_NO_BORDER` | `LUMO_NO_BORDER` |
-| Grid: compact | `AURA_COMPACT` | `LUMO_COMPACT` |
-| Grid: no row borders | `AURA_NO_ROW_BORDERS` | `LUMO_NO_ROW_BORDERS` |
-| Grid: column borders | `AURA_COLUMN_BORDERS` | `LUMO_COLUMN_BORDERS` |
-| TextField: small | — | `LUMO_SMALL` |
+| Grid: no border | `NO_BORDER` | `NO_BORDER` |
+| Grid: compact | `SMALL` | `LUMO_COMPACT` |
+| Grid: no row borders | `NO_ROW_BORDERS` | `NO_ROW_BORDERS` |
+| Grid: column borders | `COLUMN_BORDERS` | `COLUMN_BORDERS` |
+| TextField: small | `SMALL` (works on all input fields) | `SMALL` |
 
-**Aura accent colors for buttons** — Aura uses CSS classes instead of theme attributes for certain color variants:
-
-```css
-/* These classes are applied automatically by AURA_SUCCESS, AURA_ERROR, AURA_WARNING */
-vaadin-button.aura-accent-green  { /* success */ }
-vaadin-button.aura-accent-red    { /* error */ }
-vaadin-button.aura-accent-yellow { /* warning */ }
-```
 
 ## Utility Classes (Lumo Only)
 
@@ -339,21 +338,24 @@ card.addClassNames(
 
 Categories: `Background`, `Border`, `BorderColor`, `BorderRadius`, `BoxShadow`, `Display`, `FlexDirection`, `FlexGrow`, `FlexShrink`, `FlexWrap`, `FontSize`, `FontWeight`, `Gap`, `Height`, `JustifyContent`, `Margin`, `Overflow`, `Padding`, `Position`, `TextAlignment`, `TextColor`, `Width`, and responsive breakpoint variants.
 
-**Aura has no equivalent.** If using Aura, use CSS custom properties, inline styles, or custom CSS classes instead.
+**Aura has no equivalent.** If using Aura, use CSS custom properties, inline styles, or custom CSS classes instead. You can also enable the experimental Tailwind support and use string-based class names.
 
 ## Shadows and Elevation
 
 ### Aura: Surface Level System
 
-Aura uses a surface color system where elevation is controlled by `--aura-surface-level`. Higher levels are lighter in light mode (closer to white) and lighter in dark mode (closer to the user).
+Aura uses a surface color system where elevation is controlled by `--aura-surface-level`. Higher levels are lighter in light mode (closer to white) and lighter in dark mode (closer to the user). You can combine the surface color with the shadow tokens.
 
 ```css
 .card {
     background: var(--aura-surface-color);
     --aura-surface-level: 2;      /* default is 1 */
     --aura-surface-opacity: 0.5;  /* transparency, default 0.5 */
+    box-shadow: var(--aura-shadow-s);
 }
 ```
+
+NOTE: you can only change the level and opacity on certain elements that match the list of selectors in the aura surface.css source file (https://github.com/vaadin/web-components/blob/71acbbfd677a9a3272fc79b4279d4b298f37640c/packages/aura/src/surface.css#L7-L41).
 
 The surface color is computed from `--aura-background-color`, the level, and the opacity. Nesting elements with the same surface color creates a stacking effect due to transparency.
 
@@ -387,22 +389,8 @@ vaadin-horizontal-layout {
     --vaadin-horizontal-layout-gap: 16px;
 }
 
-vaadin-text-field::part(input-field) {
-    border-radius: 8px;
-}
-```
-
-For theme-specific styling, use `::part()` selectors with the appropriate theme tokens:
-
-```css
-/* Lumo */
-vaadin-grid::part(header-cell) {
-    background-color: var(--lumo-contrast-5pct);
-}
-
-/* Aura — adjust surface level instead */
-vaadin-grid::part(header-cell) {
-    --aura-surface-level: 0;
+vaadin-text-field {
+    --vaadin-input-field-border-radius: 8px;
 }
 ```
 
@@ -432,17 +420,12 @@ html {
 /* styles/my-theme.css */
 html {
     --lumo-font-family: 'Inter', sans-serif;
-    --lumo-primary-color: hsl(220, 80%, 50%);
-    --lumo-primary-color-50pct: hsla(220, 80%, 50%, 0.5);
-    --lumo-primary-color-10pct: hsla(220, 80%, 50%, 0.1);
-    --lumo-primary-text-color: hsl(220, 80%, 45%);
+    --lumo-primary-color: light-dark(hsl(220, 80%, 50%), hsl(220, 85%, 65%));
+    --lumo-primary-color-50pct: light-dark(hsla(220, 80%, 50%, 0.5), hsl(220, 85%, 65%, 0.5));
+    --lumo-primary-color-10pct: light-dark(hsla(220, 80%, 50%, 0.1), hsl(220, 85%, 65%, 0.1));
+    --lumo-primary-text-color: light-dark(hsl(220, 80%, 45%), hsl(220, 80%, 70%));
     --lumo-border-radius-m: 8px;
     --lumo-border-radius-l: 16px;
-}
-
-[theme~="dark"] {
-    --lumo-primary-color: hsl(220, 85%, 65%);
-    --lumo-base-color: hsl(220, 20%, 12%);
 }
 ```
 
@@ -469,10 +452,9 @@ public class Application implements AppShellConfigurator {
 
 1. **Mixing theme tokens** — using `--aura-*` properties in a Lumo app or `--lumo-*` in an Aura app. These properties don't exist in the other theme and will have no effect.
 2. **Using `LumoUtility` with Aura** — utility classes only work with the Lumo theme. With Aura, use custom CSS classes or inline styles.
-3. **Wrong dark mode selector** — Aura uses `color-scheme` with `-light`/`-dark` suffixed properties; Lumo uses `[theme~="dark"]`. Don't use Lumo's dark selector with Aura or vice versa.
-4. **Hardcoding colors and sizes** — breaks dark mode and makes theme changes impossible. Always use the active theme's properties.
-5. **Using `@CssImport`** — this annotation is removed in Vaadin 25. Use `@StyleSheet` instead.
-6. **Loading theme after app styles** — theme stylesheets must come first in `@StyleSheet` ordering.
+3. **Hardcoding colors and sizes** — breaks dark mode and makes theme changes impossible. Always use the active theme's properties.
+4. **Using `@CssImport`** — this annotation is removed in Vaadin 25. Use `@StyleSheet` instead.
+5. **Loading theme after app styles** — theme stylesheets must come first in `@StyleSheet` ordering.
 
 ## Detailed Reference
 
