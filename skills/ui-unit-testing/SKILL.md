@@ -1,28 +1,31 @@
 ---
 name: ui-unit-testing
 description: >
-  Guide Claude on writing fast, browser-free UI unit tests for Vaadin 25 Flow views.
+  Guide Claude on writing fast, browser-free tests for Vaadin 25 Flow views with
+  the Browserless Testing framework (formerly UI Unit Testing).
   This skill should be used when the user asks to "write a UI test", "unit test a view",
-  "test without a browser", "use UIUnitTest", "test a Vaadin component",
-  "browser-free testing", "browser-less testing", or needs help with the
-  TestBench UI unit testing framework, component testers, navigation in tests,
-  or mocking Spring beans in Vaadin UI tests.
-version: 0.1.0
+  "test without a browser", "use BrowserlessTest", "use UIUnitTest", "test a Vaadin component",
+  "browser-free testing", "browserless testing", or needs help with the
+  Vaadin browserless testing framework, component testers, navigation in tests,
+  or mocking Spring beans in Vaadin view tests.
+version: 0.2.0
 ---
 
-# Browser-Free UI Unit Testing in Vaadin 25
+# Browserless Testing in Vaadin 25
 
 Use the Vaadin MCP tools (`search_vaadin_docs`) to look up the latest documentation whenever uncertain about a specific API detail. Always set `vaadin_version` to `"25"` and `ui_language` to `"java"`.
 
-## What UI Unit Testing Is
+## What Browserless Testing Is
 
-UI unit tests run server-side Java code without a browser or servlet container. You interact directly with your server-side view classes and Vaadin components. The `UIUnitTest` base class sets up the Vaadin session, UI, and routing — all in the same JVM as your JUnit tests.
+Browserless tests (previously called "UI Unit Tests") run server-side Java code without a browser or servlet container. You interact directly with your server-side view classes and Vaadin components. The `BrowserlessTest` / `SpringBrowserlessTest` base classes set up the Vaadin session, UI, and routing — all in the same JVM as your JUnit tests.
 
 This makes tests fast (milliseconds, not seconds), stable (no browser flakiness), and easy to run in CI.
 
-## When to Use UI Unit Tests vs. End-to-End Tests
+**Free for all users since Vaadin 25.1.** Earlier versions required a commercial TestBench subscription.
 
-**UI unit tests** — the default choice for most view testing:
+## When to Use Browserless Tests vs. End-to-End Tests
+
+**Browserless tests** — the default choice for most view testing:
 - Testing view logic, navigation, form validation, component state
 - TDD workflows where you run tests on every save
 - Verifying that clicking a button shows the right notification
@@ -34,43 +37,31 @@ This makes tests fast (milliseconds, not seconds), stable (no browser flakiness)
 - Visual regression testing
 - Cross-browser compatibility
 
-Write many UI unit tests and few end-to-end tests.
+Write many browserless tests and few end-to-end tests.
 
 ## Setup
 
-### Maven dependency (Vaadin 25 with JUnit 5/6)
+### Maven dependency
+
+The browserless testing framework ships in `browserless-test-junit6`. Vaadin 25 + Spring Boot 4 default to JUnit 6, which is API-compatible with JUnit 5.
 
 ```xml
 <dependency>
     <groupId>com.vaadin</groupId>
-    <artifactId>vaadin-testbench-unit-junit6</artifactId>
+    <artifactId>browserless-test-junit6</artifactId>
     <scope>test</scope>
 </dependency>
 ```
 
-For JUnit 4, use `vaadin-testbench-unit` and add `junit-vintage-engine`:
-
-```xml
-<dependency>
-    <groupId>com.vaadin</groupId>
-    <artifactId>vaadin-testbench-unit</artifactId>
-    <scope>test</scope>
-</dependency>
-<dependency>
-    <groupId>org.junit.vintage</groupId>
-    <artifactId>junit-vintage-engine</artifactId>
-    <scope>test</scope>
-</dependency>
-```
-
-Note: Vaadin 25 with Spring Boot 4 defaults to JUnit 6. JUnit 6 is API-compatible with JUnit 5.
+> **Migrating from UI Unit Testing?** Replace the older `vaadin-testbench-unit` (JUnit 4) or `vaadin-testbench-unit-junit5` artifact with `browserless-test-junit6`, and rename the base classes (`UIUnitTest` → `BrowserlessTest`, `SpringUIUnitTest` → `SpringBrowserlessTest`). The testing API is otherwise unchanged.
 
 ## Writing Your First Test
 
-Extend `UIUnitTest` (JUnit 5/6) or `UIUnit4Test` (JUnit 4):
+Extend `SpringBrowserlessTest` for Spring Boot projects (and add `@SpringBootTest`), or `BrowserlessTest` otherwise:
 
 ```java
-class HelloWorldViewTest extends UIUnitTest {
+@SpringBootTest
+class HelloWorldViewTest extends SpringBrowserlessTest {
 
     @Test
     void clickButton_showsNotification() {
@@ -163,36 +154,37 @@ Button innerBtn = layout.$(Button.class).first();
 
 ## Restricting Package Scanning
 
-By default, UIUnitTest scans the entire classpath for routes. For faster startup, restrict to specific packages:
-
-```java
-@ViewPackages(classes = {MyView.class, OtherView.class})
-class MyViewTest extends UIUnitTest {
-    // Only scans packages containing MyView and OtherView
-}
-
-// Shortcut — scan only the test class's package
-@ViewPackages
-class MyViewTest extends UIUnitTest { }
-```
-
-## Testing with Spring
-
-For Spring Boot projects, use the Spring-aware test base class:
+By default, browserless tests scan the entire classpath for routes. For faster startup, restrict to specific packages with `@ViewPackages`. Prefer the `classes()` array — it survives IDE refactors when classes move:
 
 ```java
 @SpringBootTest
-class MyViewTest extends SpringUIUnitTest {
+@ViewPackages(classes = {MyView.class, OtherView.class})
+class MyViewTest extends SpringBrowserlessTest {
+    // Scans the packages containing MyView and OtherView (and sub-packages)
+}
+
+// Or by package name:
+@SpringBootTest
+@ViewPackages(packages = {"com.example.app.feature1", "com.example.app.feature2"})
+class MyViewTest extends SpringBrowserlessTest { }
+```
+
+## Non-Spring Projects
+
+If you aren't using Spring, extend `BrowserlessTest` directly and drop `@SpringBootTest`:
+
+```java
+class MyViewTest extends BrowserlessTest {
 
     @Test
-    void testWithSpringContext() {
+    void test() {
         MyView view = navigate(MyView.class);
-        // Spring beans are injected into the view automatically
+        // ...
     }
 }
 ```
 
-For Quarkus, use `QuarkusUIUnitTest` with `@QuarkusTest`.
+For Quarkus, see the Vaadin docs for the Quarkus-specific browserless base class and dependency.
 
 ## Common Testing Patterns
 
@@ -243,5 +235,5 @@ void deleteButton_showsConfirmDialog() {
 2. **Use `@ViewPackages` to limit scanning** — speeds up test initialization significantly in large projects.
 3. **One assertion focus per test** — test one behavior per method. Name tests descriptively: `action_expectedResult`.
 4. **Use `test()` for interaction, not direct method calls** — `test(button).click()` checks visibility and enabled state; `button.click()` bypasses those checks.
-5. **Prefer UI unit tests over end-to-end** — they're 10-100x faster and more stable. Reserve end-to-end tests for client-side behavior and critical paths.
+5. **Prefer browserless tests over end-to-end** — they're 10-100x faster and more stable. Reserve end-to-end tests for client-side behavior and critical paths.
 6. **Test the user's perspective** — verify what the user sees (notification text, navigation result, field errors) rather than internal implementation details.

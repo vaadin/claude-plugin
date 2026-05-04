@@ -16,7 +16,7 @@ This plugin provides Claude with deep knowledge about Vaadin 25 development patt
 | **responsive-layouts** | Mobile support, breakpoints, media queries, container queries, responsive utility classes |
 | **reusable-components** | Custom components, Composite, component APIs, HasValue, HasComponents, encapsulation |
 | **forms-and-validation** | Binder, form fields, validation, converters, required fields, cross-field validation |
-| **ui-unit-testing** | Browser-free tests, UIUnitTest, component testers, fast view testing |
+| **ui-unit-testing** | Browserless tests, BrowserlessTest, component testers, fast view testing |
 | **testbench-testing** | End-to-end tests, TestBench, page objects, ElementQuery, browser testing |
 | **data-providers** | Grid data binding, lazy loading, filtering, sorting, Spring Pageable integration |
 | **third-party-components** | Web Component wrapping, React component integration, @Tag, @NpmPackage, ReactAdapterComponent, DOM events, property sync |
