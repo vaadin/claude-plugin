@@ -94,19 +94,18 @@ Certain palette colors are used for the built-in component variants (e.g., butto
 - `success` variant -> green accent color
 - `warning` variant -> yellow accent color
 
-**Accent color** — the primary action color. Applied per-component or globally:
+**Accent color** — the primary action color. Override the color-scheme-specific `-light` and `-dark` properties (the bare `--aura-accent-color` is read-only and computed from the active scheme):
 
 ```css
 html {
-    /* Global accent color. You need to override it separately for ligth and dark color schemes */
     --aura-accent-color-light: #3b82f6;
-    --aura-accent-color-dark: #3b82f6;
+    --aura-accent-color-dark: #60a5fa;
 }
 
 /* Or per-component */
 vaadin-button {
     --aura-accent-color-light: #42C556;
-    --aura-accent-color-dark: #42C556; 
+    --aura-accent-color-dark: #42C556;
 }
 ```
 
@@ -146,7 +145,7 @@ html {
 }
 ```
 
-Each semantic color (primary, error, success, warning) has `*-color`, `*-color-50pct`, `*-color-10pct`, `*-text-color`, and `*-contrast-color` variants. The contrast scale (`--lumo-contrast-5pct` through `--lumo-contrast`) provides 10 levels for backgrounds, borders, and text.
+Each semantic color has `*-color`, `*-color-10pct`, `*-text-color`, and `*-contrast-color` variants. Primary, error, and success additionally have `*-color-50pct`; warning does not. The contrast scale (`--lumo-contrast-5pct`, `-10pct`, `-20pct`, …, `-90pct`, and `--lumo-contrast`) provides 11 levels for backgrounds, borders, and text.
 
 ## Dark Mode
 
@@ -158,9 +157,19 @@ public class Application implements AppShellConfigurator {
 }
 ```
 
-Values: `LIGHT` (default), `DARK`, `LIGHT_DARK` (follows OS preference).
+Values:
+- `LIGHT` — always light (default)
+- `DARK` — always dark
+- `LIGHT_DARK` — follow the user's OS/browser preference, preferring light
+- `DARK_LIGHT` — follow the user's OS/browser preference, preferring dark
 
-Both themes use the native CSS `color-scheme` property. The `LIGHT_DARK` value maps to `color-scheme: light dark`, which automatically follows the user's OS preference.
+`LIGHT` and `DARK` set the `theme` attribute on the document, which is what the Lumo `[theme~="dark"]` selector matches against. `LIGHT_DARK` and `DARK_LIGHT` use the CSS `color-scheme` property and do **not** match `[theme~="dark"]` — for colors that need to work with the system-driven modes, use the CSS `light-dark()` function.
+
+Switch the color scheme programmatically:
+
+```java
+UI.getCurrentOrThrow().getPage().setColorScheme(ColorScheme.Value.DARK);
+```
 
 ### Aura Dark Mode
 
@@ -177,7 +186,7 @@ html {
 
 ### Lumo Dark Mode
 
-With Lumo, use the native `light-dark()` function to support both color schemes when customizing the colors:
+The `light-dark()` function is the most flexible approach — it works with every `ColorScheme` value:
 
 ```css
 html {
@@ -186,6 +195,8 @@ html {
     --lumo-body-text-color: light-dark(hsla(0, 0%, 0%, 0.9), hsla(0, 0%, 100%, 0.9));
 }
 ```
+
+If the app uses `ColorScheme.Value.DARK` (static dark mode), you can also target dark-only overrides via the `[theme~="dark"]` selector. That selector does **not** match the system-driven `LIGHT_DARK` / `DARK_LIGHT` modes — use `light-dark()` for those.
 
 ## Typography
 
