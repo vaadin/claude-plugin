@@ -55,7 +55,7 @@ This plugin includes the Vaadin MCP server, which provides:
 2. Install the plugin:
 
    ```shell
-   /plugin install vaadin-claude@vaadin-claude-plugin
+   /plugin install vaadin-claude@vaadin-claude
    ```
 
    Or open the plugin manager with `/plugin`, go to the **Discover** tab, and select **vaadin-claude** to install interactively.
