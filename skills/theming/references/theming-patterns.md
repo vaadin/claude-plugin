@@ -132,36 +132,41 @@
 
 ## Component Theme Variants Comparison
 
+Variants supported by both themes use unprefixed enum values (e.g., `ButtonVariant.PRIMARY`). `LUMO_*` prefixes apply only to variants that exist exclusively in Lumo.
+
 ### Button
-| Variant | Aura | Lumo |
-|---------|------|------|
-| Primary | `AURA_PRIMARY` | `LUMO_PRIMARY` |
-| Tertiary | `AURA_TERTIARY` | `LUMO_TERTIARY` |
-| Tertiary inline | — | `LUMO_TERTIARY_INLINE` |
-| Small | — | `LUMO_SMALL` |
-| Large | — | `LUMO_LARGE` |
-| Icon | — | `LUMO_ICON` |
-| Error | `AURA_ERROR` | `LUMO_ERROR` |
-| Success | `AURA_SUCCESS` | `LUMO_SUCCESS` |
-| Warning | `AURA_WARNING` | `LUMO_WARNING` |
-| Contrast | — | `LUMO_CONTRAST` |
+| Variant | Aura | Lumo | Enum value |
+|---------|------|------|------------|
+| Primary | yes | yes | `ButtonVariant.PRIMARY` |
+| Tertiary | yes | yes | `ButtonVariant.TERTIARY` |
+| Small | yes | yes | `ButtonVariant.SMALL` |
+| Large | yes | yes | `ButtonVariant.LARGE` |
+| Success | yes | yes | `ButtonVariant.SUCCESS` |
+| Error | yes | yes | `ButtonVariant.ERROR` |
+| Warning | yes | yes | `ButtonVariant.WARNING` |
+| Tertiary inline | — | yes | `ButtonVariant.LUMO_TERTIARY_INLINE` |
+| Icon | — | yes | `ButtonVariant.LUMO_ICON` |
+| Contrast | — | yes | `ButtonVariant.LUMO_CONTRAST` |
 
 ### Grid
-| Variant | Aura | Lumo |
-|---------|------|------|
-| No border | `AURA_NO_BORDER` | `LUMO_NO_BORDER` |
-| No row borders | `AURA_NO_ROW_BORDERS` | `LUMO_NO_ROW_BORDERS` |
-| Compact | `AURA_COMPACT` | `LUMO_COMPACT` |
-| Column borders | `AURA_COLUMN_BORDERS` | `LUMO_COLUMN_BORDERS` |
-| Wrap cell content | `AURA_WRAP_CELL_CONTENT` | `LUMO_WRAP_CELL_CONTENT` |
+| Variant | Aura | Lumo | Enum value |
+|---------|------|------|------------|
+| No border | yes | yes | `GridVariant.NO_BORDER` |
+| No row borders | yes | yes | `GridVariant.NO_ROW_BORDERS` |
+| Column borders | yes | yes | `GridVariant.COLUMN_BORDERS` |
+| Row stripes | yes | yes | `GridVariant.ROW_STRIPES` |
+| Wrap cell content | yes | yes | `GridVariant.WRAP_CELL_CONTENT` |
+| Compact | — | yes | `GridVariant.LUMO_COMPACT` |
 
 ### TextField / TextArea
-| Variant | Aura | Lumo |
-|---------|------|------|
-| Small | — | `LUMO_SMALL` |
-| Helper above | — | `LUMO_HELPER_ABOVE_FIELD` |
-| Align center | — | `LUMO_ALIGN_CENTER` |
-| Align right | — | `LUMO_ALIGN_RIGHT` |
+| Variant | Aura | Lumo | Enum value |
+|---------|------|------|------------|
+| Small | yes | yes | `TextFieldVariant.SMALL` |
+| Helper above | yes | yes | `TextFieldVariant.HELPER_ABOVE` |
+| Align center | yes | yes | `TextFieldVariant.ALIGN_CENTER` |
+| Align right | yes | yes | `TextFieldVariant.ALIGN_RIGHT` |
+| Align start (RTL-aware) | yes | — | `TextFieldVariant.ALIGN_START` |
+| Align end (RTL-aware) | yes | — | `TextFieldVariant.ALIGN_END` |
 
 ### Badge Component (Vaadin 25.1+)
 

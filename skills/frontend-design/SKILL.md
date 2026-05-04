@@ -221,14 +221,13 @@ section.addClassNames(
 **Compact/dense variants:**
 
 ```java
-// Lumo theme — compact variants
-grid.addThemeVariants(GridVariant.LUMO_COMPACT, GridVariant.LUMO_NO_BORDER);
-textField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
-button.addThemeVariants(ButtonVariant.LUMO_SMALL);
+// Cross-theme variants — work in both Aura and Lumo
+grid.addThemeVariants(GridVariant.NO_BORDER);
+textField.addThemeVariants(TextFieldVariant.SMALL);
+button.addThemeVariants(ButtonVariant.SMALL);
 
-// Aura theme — compact variants
-grid.addThemeVariants(GridVariant.AURA_COMPACT, GridVariant.AURA_NO_BORDER);
-// Note: Aura does not have SMALL variants for TextField/Button
+// Lumo-only: compact grid
+grid.addThemeVariants(GridVariant.LUMO_COMPACT);
 ```
 
 **Key principle**: Pick a density and stick with it. Data-dense dashboards should be consistently compact. Spacious marketing-style views should be consistently airy. Mixing densities looks unintentional.
