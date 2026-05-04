@@ -133,7 +133,7 @@ Control who can access each view using Jakarta and Vaadin security annotations o
 | `@RolesAllowed("ADMIN")` | Users with specified role(s) | Admin panel, user management |
 | `@DenyAll` | Nobody | Default when no annotation is present |
 
-> **Note on `@PermitAll`:** Vaadin's use of `@PermitAll` differs from the Jakarta Security standard. In standard Jakarta Security, `@PermitAll` means "anyone, including unauthenticated users" — similar to Vaadin's `@AnonymousAllowed`. In Vaadin, `@PermitAll` means "any **authenticated** user." Developers familiar with standard Jakarta security should be aware of this distinction to avoid accidentally exposing views to unauthenticated users.
+> **Note on `@PermitAll`:** Vaadin's use of `@PermitAll` differs from the Jakarta Security standard. In standard Jakarta Security, `@PermitAll` means "anyone, including unauthenticated users" — similar to Vaadin's `@AnonymousAllowed`. In Vaadin, `@PermitAll` means "any **authenticated** user." Developers familiar with standard Jakarta security may be confused when access is denied to unauthenticated users on a view they explicitly "permitted all" — use `@AnonymousAllowed` for truly public views.
 
 ```java
 @Route("public")
