@@ -126,7 +126,7 @@ Risk: every public method on the parent is part of your API. Users can call anyt
    - `setEnabled()` / `setReadOnly()` for interaction states
    - `addXxxListener()` for events
 
-4. **Use typed events** — define custom `ComponentEvent` subclasses instead of generic callbacks. This integrates with Vaadin's event system and supports `@DomEvent` for client-side events.
+4. **Use typed events for reusable components** — define custom `ComponentEvent` subclasses for components intended for reuse. For one-off components, lightweight callbacks (`Runnable`, `Consumer<T>`) are appropriate. Typed events integrate with Vaadin's event system and support `@DomEvent` for client-side events.
 
 ### Constructor Design
 
@@ -154,6 +154,14 @@ public class StatusBadge extends Composite<Span> {
 ## Wiring Communication Between Components
 
 When a view is split into parent and child components, they need to communicate. Use the right pattern for the direction.
+
+**Choosing a pattern:**
+- **Setters** — simplest way to push data down. Use by default.
+- **Signals** — reduce boilerplate when multiple components share the same state.
+- **Events** — standard Vaadin pattern for child-to-parent communication. Use for reusable components.
+- **Callbacks** — lighter than events. Use for one-off components.
+
+You can mix patterns in the same view.
 
 ### Parent → Child: method calls
 
@@ -197,6 +205,41 @@ public class OrderFilterBar extends Composite<HorizontalLayout> {
 }
 ```
 
+### Reactive alternative: signals
+
+When multiple child components depend on the same piece of state, signals reduce boilerplate. Instead of calling setters on each child, define a `ValueSignal` and let children bind to it:
+
+```java
+public class EmployeeDetail extends Composite<VerticalLayout> {
+    private final Span nameLabel = new Span();
+    private final Span emailLabel = new Span();
+
+    public EmployeeDetail(ValueSignal<Employee> employee) {
+        nameLabel.bindText(employee.map(Employee::getName));
+        emailLabel.bindText(employee.map(Employee::getEmail));
+        getContent().add(nameLabel, emailLabel);
+    }
+}
+```
+
+Use setters when updates are triggered by specific events and the flow is easy to follow. Use signals when multiple components share the same state and you want to avoid manual coordination. See the `signals` skill for details.
+
+### Lightweight alternative: callbacks
+
+For one-off components where defining a full event class is overkill, accept a `Runnable` or `Consumer<T>`:
+
+```java
+public class DetailFooter extends Composite<Div> {
+    public DetailFooter(Runnable onEdit, Runnable onDelete) {
+        Button editButton = new Button("Edit", e -> onEdit.run());
+        Button deleteButton = new Button("Delete", e -> onDelete.run());
+        getContent().add(editButton, deleteButton);
+    }
+}
+```
+
+Use events for reusable components (type-safe, `Registration`-based). Use callbacks for one-off components where simplicity matters.
+
 ### Wrapper with Slots
 
 A common pattern for layout-style components with named areas:
@@ -232,6 +275,23 @@ public class PageHeader extends Composite<HorizontalLayout> {
 - **onAttach()** — called when the component is added to the UI. Use for initialization that requires the component to be in the DOM (e.g., accessing session data, subscribing to event buses).
 - **onDetach()** — called before removal from the UI. Use for cleanup (e.g., unsubscribing from event buses, releasing resources).
 - Always clean up in `onDetach()` what you set up in `onAttach()` to prevent memory leaks.
+
+## Mixin Interfaces
+
+Vaadin provides mixin interfaces that add standard functionality to your component. Implement only what your component needs:
+
+- `HasSize` — `setWidth()`, `setHeight()`, and related sizing methods
+- `HasComponents` — `add()`, `remove()`, and child component management
+- `HasText` — `setText()` and `getText()`
+- `HasEnabled` — `setEnabled()` for enabling and disabling
+- `HasTheme` — theme variant support
+
+```java
+public class StatusBadge extends Composite<HorizontalLayout>
+        implements HasSize {
+    // Now callers can use setWidth(), setHeight(), etc.
+}
+```
 
 ## Best Practices
 

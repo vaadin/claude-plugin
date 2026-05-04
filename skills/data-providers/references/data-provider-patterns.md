@@ -18,11 +18,14 @@
 @Service
 public class PersonService {
 
-    @Autowired
-    private PersonRepository repository;
+    private final PersonRepository repository;
+
+    public PersonService(PersonRepository repository) {
+        this.repository = repository;
+    }
 
     public List<Person> list(Pageable pageable) {
-        return repository.findAll(pageable).getContent();
+        return repository.findAllBy(pageable).getContent();
     }
 
     public List<Person> list(Pageable pageable, String nameFilter) {
@@ -141,7 +144,7 @@ public class Person {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        return id == ((Person) o).id;
+        return Objects.equals(id, ((Person) o).id);
     }
 
     @Override
@@ -181,5 +184,24 @@ filterField.addValueChangeListener(e -> {
 @Override
 public boolean equals(Object o) {
     return Objects.equals(email, ((Person) o).email); // email can change!
+}
+```
+
+**Spring-managing Grids or DataProviders:**
+```java
+// BAD: Grid holds UI state — not a Spring bean
+@SpringComponent
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+public class PersonGrid extends Grid<Person> { ... }
+
+// BAD: DataProvider holds query state — not a singleton
+@SpringComponent
+public class PersonDataProvider extends AbstractBackEndDataProvider<...> {
+    @Autowired private PersonRepository repo; // field injection too
+}
+
+// GOOD: plain classes with constructor-injected dependencies
+public class PersonGrid extends Grid<Person> {
+    public PersonGrid(PersonRepository repo) { ... }
 }
 ```

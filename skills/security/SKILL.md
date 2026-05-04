@@ -133,6 +133,8 @@ Control who can access each view using Jakarta and Vaadin security annotations o
 | `@RolesAllowed("ADMIN")` | Users with specified role(s) | Admin panel, user management |
 | `@DenyAll` | Nobody | Default when no annotation is present |
 
+> **Note on `@PermitAll`:** Vaadin's use of `@PermitAll` differs from the Jakarta Security standard. In standard Jakarta Security, `@PermitAll` means "anyone, including unauthenticated users" — similar to Vaadin's `@AnonymousAllowed`. In Vaadin, `@PermitAll` means "any **authenticated** user." Developers familiar with standard Jakarta security may be confused when access is denied to unauthenticated users on a view they explicitly "permitted all" — use `@AnonymousAllowed` for truly public views.
+
 ```java
 @Route("public")
 @AnonymousAllowed
@@ -342,7 +344,7 @@ The same pattern works for GitHub, Okta, and Azure AD. The only differences are:
 3. **Using `@Secured` or `@PreAuthorize` on views** — these Spring Security annotations are not supported on Vaadin views. Use `@AnonymousAllowed`, `@PermitAll`, `@RolesAllowed`, or `@DenyAll`.
 4. **Hard-coding passwords in `SecurityConfig`** — in-memory `{noop}` passwords are for prototyping only. Production applications must use JDBC, LDAP, or OAuth2 authentication.
 5. **Calling `SecurityContextLogoutHandler` without redirecting first** — the logout handler invalidates the session, so `UI.getCurrent().getPage().setLocation()` must happen before the handler call. Prefer `AuthenticationContext.logout()` which handles this correctly.
-6. **Mixing URL-pattern security and annotation-based security for the same views** — this leads to confusing, hard-to-debug access rules. Choose one approach.
+6. **Using URL-pattern security for view access control** — Vaadin uses a single servlet endpoint for all views; the browser URL is updated client-side but all requests go to the same server endpoint. This means URL-pattern rules in `HttpSecurity` (e.g., `.requestMatchers("/admin/**").hasRole("ADMIN")`) do not control access to Vaadin views. Use annotation-based access control (`@RolesAllowed`, `@PermitAll`, etc.) exclusively for view security. URL-pattern rules are still appropriate for non-Vaadin endpoints such as REST APIs.
 
 ## Detailed Reference
 

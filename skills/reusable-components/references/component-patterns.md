@@ -99,6 +99,49 @@ public class MyComponent extends Composite<Div> {
 }
 ```
 
+## Signal Binding Pattern
+
+```java
+// Child component accepts a signal and binds reactively
+public class EmployeeDetail extends Composite<VerticalLayout> {
+    public EmployeeDetail(ValueSignal<Employee> employee) {
+        Span nameLabel = new Span();
+        nameLabel.bindText(employee.map(Employee::getName));
+        
+        Span emailLabel = new Span();
+        emailLabel.bindText(employee.map(Employee::getEmail));
+        
+        getContent().add(nameLabel, emailLabel);
+    }
+}
+
+// Parent creates signal, children bind to it
+ValueSignal<Employee> selected = new ValueSignal<>(null);
+EmployeeDetail detail = new EmployeeDetail(selected);
+// Updating the signal updates all bound children:
+selected.set(employee);
+```
+
+## Callback Pattern
+
+```java
+// One-off component with callback actions
+public class ActionFooter extends Composite<HorizontalLayout> {
+    public ActionFooter(Runnable onSave, Runnable onCancel) {
+        getContent().add(
+            new Button("Save", e -> onSave.run()),
+            new Button("Cancel", e -> onCancel.run())
+        );
+    }
+}
+
+// Usage in view:
+ActionFooter footer = new ActionFooter(
+    () -> service.save(entity),
+    () -> UI.getCurrent().navigate(ListView.class)
+);
+```
+
 ## Builder / Fluent API Pattern
 
 For components with many optional configuration properties:

@@ -303,9 +303,15 @@ binder.forField(rating)
     .bind(Review::getRating, Review::setRating);
 ```
 
+### Writing Your Own Web Component
+
+When no npm package provides what you need, write the client-side code yourself using Lit. Create a JavaScript file in `frontend/` (e.g., `frontend/my-rating.js`), use `@JsModule("./my-rating.js")` with a `./` prefix, and omit `@NpmPackage`. Properties, events, and `callJsFunction()` work the same way.
+
 ## Path 2: React Component Integration
 
 This path is for npm packages that export React components (not custom elements). You create a thin adapter layer: a Java class extending `ReactAdapterComponent` and a `.tsx` file extending `ReactAdapterElement`.
+
+The integration uses an intermediate web component as a bridge: Java (server) <-> Web Component adapter <-> React (client).
 
 ### Server-Side: `ReactAdapterComponent`
 

@@ -45,11 +45,13 @@ grid.setItemsPageable(personService::list);
 
 // Service method signature:
 public List<Person> list(Pageable pageable) {
-    return repository.findAll(pageable).getContent();
+    return repository.findAllBy(pageable).getContent();
 }
 ```
 
 `setItemsPageable` converts Grid's internal query into a Spring `Pageable` with offset, limit, and sort information. This integrates directly with Spring Data repositories.
+
+> **Use `Slice` instead of `Page`:** The repository method should return a `Slice`, not a `Page`. A `Page` executes an additional `COUNT` query that Grid cannot use — Grid treats counting as a separate concern via a dedicated count callback. Use a `Slice`-returning repository method (e.g., `Slice<Person> findAllBy(Pageable pageable)`) and provide a separate count method when needed.
 
 **Without Spring (generic callbacks):**
 
@@ -205,7 +207,7 @@ public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Person person = (Person) o;
-    return id == person.id;  // stable identifier only
+    return Objects.equals(id, person.id);  // stable identifier only
 }
 
 @Override
@@ -216,20 +218,31 @@ public int hashCode() {
 
 With Lombok: use `@EqualsAndHashCode(onlyExplicitlyIncluded = true)` and `@EqualsAndHashCode.Include` on the ID field.
 
+The ID field must be `final` (e.g., `private final Long id;`) so that the hash code never changes after construction. A mutable ID violates the `hashCode()` contract and breaks Grid's internal identity tracking.
+
 ## Reusing Data Binding Logic
+
+Do NOT Spring-manage Grids or DataProviders. They hold UI state and are tied to a single user session. Create them as plain classes, pass dependencies via constructors.
 
 ### Domain-specific Grid subclass
 
 ```java
-@SpringComponent
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class PersonGrid extends Grid<Person> {
 
-    public PersonGrid(@Autowired PersonRepository repo) {
+    public PersonGrid(PersonRepository repo) {
         super(Person.class);
-        setItems(q -> repo.findAll(
-            PageRequest.of(q.getPage(), q.getPageSize())).stream());
+        setItemsPageable(pageable -> repo.findAllBy(pageable).getContent());
         setColumns("name", "email");
+    }
+}
+
+// In the view:
+@Route("people")
+@PermitAll
+public class PeopleView extends VerticalLayout {
+
+    public PeopleView(PersonRepository repo) {
+        add(new PersonGrid(repo));
     }
 }
 ```
@@ -237,12 +250,14 @@ public class PersonGrid extends Grid<Person> {
 ### Standalone DataProvider class
 
 ```java
-@SpringComponent
 public class PersonDataProvider
         extends AbstractBackEndDataProvider<Person, String> {
 
-    @Autowired
-    private PersonRepository repo;
+    private final PersonRepository repo;
+
+    public PersonDataProvider(PersonRepository repo) {
+        this.repo = repo;
+    }
 
     @Override
     protected Stream<Person> fetchFromBackEnd(Query<Person, String> query) {
@@ -264,7 +279,8 @@ public class PersonDataProvider
 1. **Use `setItemsPageable` with Spring** — it handles offset/limit/sort conversion to `Pageable` automatically, integrating cleanly with Spring Data.
 2. **Use lazy loading for datasets over ~1000 items** — in-memory is simpler but doesn't scale.
 3. **Always implement stable `hashCode`/`equals`** — based on the entity's ID, not mutable fields. This is required for Grid to correctly track selections and updates.
-4. **Use `ValueChangeMode.LAZY` on filter fields** — prevents excessive backend queries while the user is typing.
-5. **Provide a count callback when possible** — it gives users a proper scrollbar and ability to jump to the end.
-6. **Call `refreshAll()` when filter/sort criteria change externally** — the Grid doesn't automatically know when your filter field value changes.
-7. **Don't call `getGenericDataView().getItems()` on lazy data** — it loads the entire dataset into memory, defeating the purpose of lazy loading.
+4. **Declare column-name constants on the entity or DTO** — string keys like `"name"` used in `setKey()`, `setSortableColumns()`, and sort-order handling are prone to typos. Define constants (e.g., `public static final String COL_NAME = "name";`) on the entity class and reference them in the view. This makes refactoring safer and enables compile-time checks.
+5. **Use `ValueChangeMode.LAZY` on filter fields** — prevents excessive backend queries while the user is typing.
+6. **Provide a count callback when possible** — it gives users a proper scrollbar and ability to jump to the end.
+7. **Call `refreshAll()` when filter/sort criteria change externally** — the Grid doesn't automatically know when your filter field value changes.
+8. **Don't call `getGenericDataView().getItems()` on lazy data** — it loads the entire dataset into memory, defeating the purpose of lazy loading.
