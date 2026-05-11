@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+
+html {
+  --aura-accent-color-dark: #615FFF;
+  --aura-accent-color-light: #4F39F6;
+  --aura-background-color-dark: #0C0B2F;
+  --aura-background-color-light: #D0DAFF;
+  --aura-base-font-size: 15;
+  --aura-base-radius: 7;
+  --aura-content-color-scheme: light dark;
+  --aura-font-family: 'Manrope', var(--aura-font-family-system);
+  --aura-notification-color-scheme: light dark;
+  --aura-surface-level: 2;
+  color-scheme: light dark;
+}
+
+html {
+  --aura-font-weight-regular: 500;
+  --aura-font-weight-medium: 600;
+  --aura-font-weight-semibold: 700;
+  --vaadin-button-font-weight: 600;
+  --vaadin-input-field-value-font-weight: 500;
+  --vaadin-checkbox-font-weight: 600;
+  --vaadin-radio-button-font-weight: 600;
+  --vaadin-message-name-font-weight: 600;
+  --vaadin-grid-header-font-weight: 600;
+}
+
+vaadin-card,
+vaadin-dashboard-widget {
+  --aura-surface-level: 4;
+}
