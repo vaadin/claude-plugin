@@ -131,11 +131,15 @@ content.setMinHeight("0"); // allow shrinking below content size
 | Single column of components | `VerticalLayout` | — |
 | Dynamic horizontal/vertical toggle | `FlexLayout` | Swapping between H/V Layout |
 
-## Vaadin 25 Sizing Behavior
+## Sizing Behavior (the shrinking trap)
 
-In Vaadin 25, `setWidthFull()` / `setHeightFull()` / `setSizeFull()` set `flex: 1 1 100%` (not a literal `width: 100%`). This means they take available space while respecting siblings. Fixed-size siblings will NOT shrink unexpectedly.
+By default, `setWidthFull()` / `setHeightFull()` / `setSizeFull()` set literal `width: 100%` / `height: 100%`. Inside a flex layout this means "100% of the parent," not "the remaining space," so a fixed-size sibling can shrink because every child has `flex-shrink: 1`.
 
-> **Legacy note (Vaadin 24 and earlier):** In older versions, these methods set a literal `width: 100%` / `height: 100%`, which caused siblings to shrink. Old advice about always using `setFlexGrow` instead of `setWidthFull` is outdated for Vaadin 25.
+Reliable fixes:
+- `layout.setFlexGrow(1, fullSizeComponent)` (or `layout.expand(fullSizeComponent)`) — takes the remaining space without forcing 100%.
+- `layout.setFlexShrink(0, fixedComponent)` — prevents the fixed sibling from shrinking below its specified size.
+
+> **Experimental:** Enabling the `layoutComponentImprovements` feature flag (Flow only) rewires `setWidthFull` / `setHeightFull` / `setSizeFull` to apply `flex: 1` and set min-size to 0 on nested layouts. Off by default — don't assume it without confirming.
 
 ## Troubleshooting Decision Tree
 

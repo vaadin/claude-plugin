@@ -96,15 +96,30 @@ layout.setFlexGrow(1, expandingComponent);
 
 Multiple expand ratios work proportionally: `setFlexGrow(2, a)` and `setFlexGrow(1, b)` gives `a` twice the space of `b`.
 
-## Sizing with setWidthFull / setHeightFull in Vaadin 25
+## Sizing with setWidthFull / setHeightFull (the shrinking trap)
 
-In Vaadin 25, `setWidthFull()`, `setHeightFull()`, and `setSizeFull()` behave differently than in older versions. They now set `flex: 1 1 100%` instead of a literal CSS `width: 100%`. This means the component will take available space while still respecting sibling sizes — it grows to fill remaining space and shrinks if needed. This is almost always the intended behavior.
+By default in Vaadin 25, `setWidthFull()` / `setHeightFull()` / `setSizeFull()` set literal `width: 100%` / `height: 100%` on the component. Inside a flex layout that means "100% of the parent," not "the remaining space." When such a component sits next to a fixed-size sibling, the default `flex-shrink: 1` on every child lets *both* shrink to fit, so the fixed sibling can end up smaller than its specified size.
 
-As a result, a fixed-size component sitting next to a `setWidthFull()` sibling will generally NOT shrink unexpectedly in Vaadin 25. The flex-based sizing handles the space distribution correctly.
+Two reliable fixes — use either or both:
 
-You can still use `setFlexGrow(1, component)` explicitly if you prefer, and `setFlexShrink(0, fixedComponent)` is still available if you need to guarantee a component never shrinks below its specified size.
+```java
+// Prefer expand()/setFlexGrow over setWidthFull
+HorizontalLayout layout = new HorizontalLayout(fixedSizeComponent, fullSizeComponent);
+fixedSizeComponent.setWidth("200px");
+layout.setFlexGrow(1, fullSizeComponent);  // takes all remaining space
+```
 
-> **IMPORTANT — legacy behavior (does NOT apply in Vaadin 25):** In Vaadin 24 and earlier, `setWidthFull()` set a literal `width: 100%`, which meant "100% of the parent layout" rather than "the remaining space." This caused a well-known bug where fixed-size siblings would shrink because the full-size component demanded the entire parent width and the default flex-shrink allowed everything to compress. If you encounter old advice about "the shrinking trap" recommending you always use `setFlexGrow` instead of `setWidthFull`, that advice was correct for Vaadin 24 but is no longer necessary in Vaadin 25. Do not give this outdated advice to users on Vaadin 25.
+```java
+// Or pin the fixed component so it cannot shrink
+HorizontalLayout layout = new HorizontalLayout(fixedSizeComponent, fullSizeComponent);
+fixedSizeComponent.setWidth("200px");
+fullSizeComponent.setWidthFull();
+layout.setFlexShrink(0, fixedSizeComponent);
+```
+
+`expand(component)` is shorthand for `setFlexGrow(1, component)`. With multiple growing children, ratios distribute proportionally: `setFlexGrow(2, a)` and `setFlexGrow(1, b)` gives `a` twice the space of `b`.
+
+> **Experimental:** Vaadin 25 ships a `layoutComponentImprovements` feature flag (Flow only) that rewires `setWidthFull` / `setHeightFull` / `setSizeFull` to apply `flex: 1` instead of a literal percentage, which prevents fixed-size siblings from shrinking and also sets `min-size: 0` on nested layouts. It is **off by default** — do not assume the behavior unless the user has explicitly enabled the flag.
 
 ## The Overflow Trap
 
@@ -118,7 +133,7 @@ overflowingComponent.setMinHeight("0");
 overflowingComponent.setMinWidth("0");
 ```
 
-In Vaadin 25, `setSizeFull()` also sets the minimum size of nested layouts to 0 automatically, which helps prevent this issue. But for non-layout components or explicit sizing, you may still need to set it manually.
+(The experimental `layoutComponentImprovements` flag also sets the min-size of nested layouts to 0 when `setSizeFull()` is used, but that is opt-in — by default you still set it manually.)
 
 ## Wrapping
 
