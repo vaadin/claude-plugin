@@ -101,7 +101,7 @@ Use when you want to **add** to an existing component's API. The parent class's 
 public class PrimaryButton extends Button {
     public PrimaryButton(String text) {
         super(text);
-        addThemeVariants(ButtonVariant.LUMO_PRIMARY); // LUMO_PRIMARY for Lumo, AURA_PRIMARY for Aura
+        addThemeVariants(ButtonVariant.PRIMARY);
     }
 }
 ```

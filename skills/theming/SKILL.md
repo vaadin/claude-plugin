@@ -294,31 +294,44 @@ card.addClassNames(
 
 ## Component Theme Variants
 
-Both themes provide style variants via `addThemeVariants()`.
+Both themes provide style variants via `addThemeVariants()`. Variants supported by both themes use unprefixed enum values (e.g., `ButtonVariant.PRIMARY`); `LUMO_*` prefixes apply only to variants that are exclusive to Lumo.
 
 ```java
+// Cross-theme — works in both Aura and Lumo
 button.addThemeVariants(ButtonVariant.PRIMARY);
+
+// Lumo-only variants are prefixed
+button.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
 ```
 
-Not all variants are available in both themes. Check the component documentation for which variants each theme supports. Common examples:
+Check the component documentation for what each theme supports. Common variants:
 
-| Variant | Aura | Lumo |
-|---------|------|------|
-| Button: primary | `PRIMARY` | `PRIMARY` |
-| Button: tertiary | `TERTIARY` | `TERTIARY` |
-| Button: tertiary-inline | — | `LUMO_TERTIARY_INLINE` |
-| Button: small/large | `SMALL` / `LARGE` | `SMALL` / `LARGE` |
-| Button: icon | — | `LUMO_ICON` |
-| Button: success | `SUCCESS` | `SUCCESS` |
-| Button: error | `ERROR` | `ERROR` |
-| Button: warning | `WARNING` | `WARNING` |
-| Button: contrast | — | `LUMO_CONTRAST` |
-| Grid: no border | `NO_BORDER` | `NO_BORDER` |
-| Grid: compact | `SMALL` | `LUMO_COMPACT` |
-| Grid: no row borders | `NO_ROW_BORDERS` | `NO_ROW_BORDERS` |
-| Grid: column borders | `COLUMN_BORDERS` | `COLUMN_BORDERS` |
-| TextField: small | `SMALL` (works on all input fields) | `SMALL` |
+| Variant | Aura | Lumo | Enum value |
+|---------|------|------|------------|
+| Button: primary | yes | yes | `ButtonVariant.PRIMARY` |
+| Button: tertiary | yes | yes | `ButtonVariant.TERTIARY` |
+| Button: small / large | yes | yes | `ButtonVariant.SMALL` / `LARGE` |
+| Button: success | yes | yes | `ButtonVariant.SUCCESS` |
+| Button: error | yes | yes | `ButtonVariant.ERROR` |
+| Button: warning | yes | yes | `ButtonVariant.WARNING` |
+| Button: tertiary-inline | — | yes | `ButtonVariant.LUMO_TERTIARY_INLINE` |
+| Button: icon | — | yes | `ButtonVariant.LUMO_ICON` |
+| Button: contrast | — | yes | `ButtonVariant.LUMO_CONTRAST` |
+| Grid: no border | yes | yes | `GridVariant.NO_BORDER` |
+| Grid: no row borders | yes | yes | `GridVariant.NO_ROW_BORDERS` |
+| Grid: column borders | yes | yes | `GridVariant.COLUMN_BORDERS` |
+| Grid: row stripes | yes | yes | `GridVariant.ROW_STRIPES` |
+| Grid: compact | — | yes | `GridVariant.LUMO_COMPACT` |
+| TextField: small | yes | yes | `TextFieldVariant.SMALL` |
 
+**Aura accent colors for buttons** — Aura uses CSS classes instead of theme attributes for certain color variants:
+
+```css
+/* These classes are applied automatically by ButtonVariant.SUCCESS / ERROR / WARNING in Aura */
+vaadin-button.aura-accent-green  { /* success */ }
+vaadin-button.aura-accent-red    { /* error */ }
+vaadin-button.aura-accent-yellow { /* warning */ }
+```
 
 ## Utility Classes (Lumo Only)
 
