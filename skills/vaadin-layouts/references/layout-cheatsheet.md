@@ -115,10 +115,16 @@ shell.add(sidebar, content);
 ### Scrollable content area
 
 ```java
-VerticalLayout content = new VerticalLayout();
-content.setMinHeight("0"); // allow shrinking below content size
-// Wrap in a Scroller, or set overflow on a parent
+Scroller scroller = new Scroller();
+scroller.setSizeFull();
+
+VerticalLayout content = new VerticalLayout(); // no explicit height — hugs content
+content.add(/* many components */);
+
+scroller.setContent(content);
 ```
+
+Wrap scrollable layouts in a `Scroller` rather than using CSS overflow. Don't set an explicit height on the inner layout — let it hug its content so the Scroller knows when to scroll.
 
 ## Choosing the Right Layout Component
 

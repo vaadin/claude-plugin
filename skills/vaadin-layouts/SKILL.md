@@ -145,6 +145,27 @@ layout.setWrap(true);
 
 When combining wrapping with `addToStart`/`addToMiddle`/`addToEnd`, group items into sub-layouts for proper wrap behavior.
 
+## Scrollable Layouts
+
+When a layout needs to scroll, wrap it inside a `Scroller` rather than controlling overflow with CSS. Make sure the inner layout does **not** have an explicit height set — let it hug its content so the Scroller can determine when scrolling is needed. This makes it immediately clear from the code which parts of the UI scroll and which don't.
+
+```java
+// GOOD — explicit scrollable area, easy to understand
+Scroller scroller = new Scroller();
+scroller.setSizeFull();
+
+VerticalLayout content = new VerticalLayout(); // height is undefined (default) — hugs content
+content.add(/* many components */);
+
+scroller.setContent(content);
+
+// BAD — scrolling controlled via CSS, not obvious from the code
+VerticalLayout content = new VerticalLayout();
+content.setSizeFull();
+content.getStyle().set("overflow", "auto");
+content.add(/* many components */);
+```
+
 ## Best Practices
 
 1. **Explicitly disable padding/spacing when not needed** — nested layouts accumulate unwanted space fast. Use `setPadding(false)` and `setSpacing(false)` on inner layouts.
