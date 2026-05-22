@@ -206,6 +206,58 @@ form.setResponsiveSteps(
 );
 ```
 
+## Separating the Form into Its Own Class
+
+Encapsulate the form in a dedicated class that extends `Composite<FormLayout>`. This keeps the Binder, fields, and form data object together, and exposes a small `setFormDataObject` / `getFormDataObject` API to the surrounding view. The constructor builds the fields, adds them to `getContent()`, and wires up the Binder.
+
+**Buffered mode** — the form owns the form data object and writes to it on demand:
+
+```java
+public class ProposalForm extends Composite<FormLayout> {
+    private final Binder<Proposal> binder;
+    private Proposal formDataObject;
+
+    public void setFormDataObject(@Nullable Proposal formDataObject) {
+        this.formDataObject = formDataObject;
+        if (formDataObject != null) {
+            binder.readBean(formDataObject);
+        } else {
+            binder.refreshFields();
+        }
+    }
+
+    public Optional<Proposal> getFormDataObject() {
+        if (formDataObject == null) {
+            formDataObject = new Proposal();
+        }
+        return binder.writeBeanIfValid(formDataObject)
+            ? Optional.of(formDataObject)
+            : Optional.empty();
+    }
+}
+```
+
+**Write-through mode** — the bean is set on the Binder and edits flow through immediately; the getter only validates before handing it back:
+
+```java
+public class ProposalForm extends Composite<FormLayout> {
+    private final Binder<Proposal> binder;
+
+    public void setFormDataObject(@Nullable Proposal formDataObject) {
+        binder.setBean(formDataObject);
+    }
+
+    public Optional<Proposal> getFormDataObject() {
+        if (binder.getBean() == null) {
+            throw new IllegalStateException("No form data object");
+        }
+        return binder.validate().isOk()
+            ? Optional.of(binder.getBean())
+            : Optional.empty();
+    }
+}
+```
+
 ## Best Practices
 
 1. **Use buffered mode for most forms** — it gives you control over when data is written and lets you implement Cancel without manual state tracking.
@@ -214,6 +266,7 @@ form.setResponsiveSteps(
 4. **Use converters for type safety** — domain primitives with converters catch invalid data at the type system level.
 5. **Set `asRequired()` on mandatory fields** — it provides both the visual indicator and the empty-value check in one call.
 6. **Show binder-level errors prominently** — they don't attach to a specific field, so users need a clear error display area.
+7. **Encapsulate the form in its own `Composite<FormLayout>` class** — keep the Binder, fields, and form data object together, and expose a small `setFormDataObject` / `getFormDataObject` API to the surrounding view.
 
 ## Detailed Reference
 
