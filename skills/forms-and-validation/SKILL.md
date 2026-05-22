@@ -59,6 +59,8 @@ binder.forField(emailField)
 
 The chain order matters: `forField()` → `asRequired()` → `withValidator()` → `withConverter()` → `withValidator()` → `bind()`. Validators and converters execute in the order they appear.
 
+**Always prefer binding fields using getter/setter method references. Don't use string property names unless the FDO is a Java record.**
+
 ### Shorthand binding
 
 ```java
@@ -149,13 +151,15 @@ public class PositiveIntegerValidator implements Validator<Integer> {
 
 ### 3. Default validators (component built-in)
 
-Some components have built-in validation (e.g., DatePicker min/max). These work alongside Binder validators. Disable them if needed:
+Some components have built-in validation (e.g., DatePicker min/max, EmailField). These work alongside Binder validators. Disable them if needed:
 
 ```java
 binder.forField(datePicker)
     .withDefaultValidator(false)
     .bind(Bean::getDate, Bean::setDate);
 ```
+
+Default validators take precedence over binding-level validators. To customize the error messages of default validators, use the field's `setI18n()` method.
 
 ### 4. Binder-level validators (cross-field)
 
@@ -195,6 +199,20 @@ binder.setStatusLabel(errorDisplay);
 ## Form Layout
 
 Use `FormLayout` for automatic responsive column adjustment:
+
+Auto-responsive mode:
+
+```java
+FormLayout form = new FormLayout();
+form.setAutoResponsive(true);
+form.addFormRow(firstNameField, lastNameField);
+FormLayout.FormRow emailRow = new FormLayout.FormRow();
+emailRow.add(emailField, 2); // colspan 2
+form.add(emailRow);
+form.addFormRow(passwordField, confirmPasswordField);
+```
+
+Manually set responsive steps:
 
 ```java
 FormLayout form = new FormLayout();
