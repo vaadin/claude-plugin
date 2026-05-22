@@ -141,7 +141,7 @@ Wrap scrollable layouts in a `Scroller` rather than using CSS overflow. Don't se
 
 By default, `setWidthFull()` / `setHeightFull()` / `setSizeFull()` set literal `width: 100%` / `height: 100%`. Inside a flex layout this means "100% of the parent," not "the remaining space," so a fixed-size sibling can shrink because every child has `flex-shrink: 1`.
 
-Reliable fixes:
+Reliable fixes (note: `setFlexGrow` / `setFlexShrink` are called on the **parent layout** with the child as an argument — they are not methods on the child component):
 - `layout.setFlexGrow(1, fullSizeComponent)` (or `layout.expand(fullSizeComponent)`) — takes the remaining space without forcing 100%.
 - `layout.setFlexShrink(0, fixedComponent)` — prevents the fixed sibling from shrinking below its specified size.
 
@@ -151,7 +151,7 @@ Reliable fixes:
 
 **Problem: Component renders smaller than specified size**
 1. Is the parent constraining it? → Check parent sizing chain up to the root
-2. Is `setFlexShrink` set to a non-zero value? → Set `setFlexShrink(0, component)` to prevent shrinking
+2. Is `setFlexShrink` set to a non-zero value? → Call `parentLayout.setFlexShrink(0, component)` on the parent layout to prevent the child from shrinking
 
 **Problem: Unwanted scrollbars / overflow**
 1. Is it a nested layout? → Set `setMinHeight("0")` or `setMinWidth("0")` on the overflowing component

@@ -69,7 +69,7 @@ HorizontalLayout also offers `addToStart()`, `addToMiddle()`, `addToEnd()` for g
 
 ## Spacing, Padding, Margin
 
-**Spacing** — gap between children. Both layouts have it ON by default. Control it with `setSpacing(boolean)`. Fine-tune using theme variants:
+**Spacing** — gap between children. Both layouts have it ON by default. Control it with `setSpacing(boolean)`. Fine-tune using theme variants (but don't mix Lumo and Aura theme variants):
 
 ```java
 layout.setSpacing(false);
@@ -88,25 +88,34 @@ layout.setSpacing(12, Unit.PIXELS);
 
 ## Expanding Items with Flex
 
+**Important:** `setFlexGrow` and `setFlexShrink` are called on the **parent layout**, passing the child as an argument — not on the child component itself. The flex container controls how its children distribute space; this is a flexbox property of the parent-child relationship, not a property of the child in isolation. There is no `component.setFlexGrow(1)`.
+
 Make a component fill remaining space:
 
 ```java
+// CORRECT — called on the parent layout, with the child as the second argument
 layout.setFlexGrow(1, expandingComponent);
+
+// WRONG — silently does nothing. The child-components varargs parameter is empty,
+// so this compiles but applies the flex-grow to no children at all.
+layout.setFlexGrow(1);
 ```
 
-Multiple expand ratios work proportionally: `setFlexGrow(2, a)` and `setFlexGrow(1, b)` gives `a` twice the space of `b`.
+The child-components parameter is varargs, which means forgetting to pass the child does NOT produce a compile error — it just silently no-ops. If a flex setting appears to have no effect, double-check that you actually passed the target component(s).
+
+Multiple expand ratios work proportionally: `layout.setFlexGrow(2, a)` and `layout.setFlexGrow(1, b)` gives `a` twice the space of `b`.
 
 ## Sizing with setWidthFull / setHeightFull (the shrinking trap)
 
 By default in Vaadin 25, `setWidthFull()` / `setHeightFull()` / `setSizeFull()` set literal `width: 100%` / `height: 100%` on the component. Inside a flex layout that means "100% of the parent," not "the remaining space." When such a component sits next to a fixed-size sibling, the default `flex-shrink: 1` on every child lets *both* shrink to fit, so the fixed sibling can end up smaller than its specified size.
 
-Two reliable fixes — use either or both:
+Two reliable fixes — use either or both. Note that `setFlexGrow` and `setFlexShrink` are always called on the **parent layout** with the child as an argument, never on the child component itself:
 
 ```java
 // Prefer expand()/setFlexGrow over setWidthFull
 HorizontalLayout layout = new HorizontalLayout(fixedSizeComponent, fullSizeComponent);
 fixedSizeComponent.setWidth("200px");
-layout.setFlexGrow(1, fullSizeComponent);  // takes all remaining space
+layout.setFlexGrow(1, fullSizeComponent);  // called on layout, not on fullSizeComponent
 ```
 
 ```java
@@ -114,10 +123,10 @@ layout.setFlexGrow(1, fullSizeComponent);  // takes all remaining space
 HorizontalLayout layout = new HorizontalLayout(fixedSizeComponent, fullSizeComponent);
 fixedSizeComponent.setWidth("200px");
 fullSizeComponent.setWidthFull();
-layout.setFlexShrink(0, fixedSizeComponent);
+layout.setFlexShrink(0, fixedSizeComponent);  // called on layout, not on fixedSizeComponent
 ```
 
-`expand(component)` is shorthand for `setFlexGrow(1, component)`. With multiple growing children, ratios distribute proportionally: `setFlexGrow(2, a)` and `setFlexGrow(1, b)` gives `a` twice the space of `b`.
+`layout.expand(component)` is shorthand for `layout.setFlexGrow(1, component)` — also called on the parent. With multiple growing children, ratios distribute proportionally: `layout.setFlexGrow(2, a)` and `layout.setFlexGrow(1, b)` gives `a` twice the space of `b`.
 
 > **Experimental:** Vaadin 25 ships a `layoutComponentImprovements` feature flag (Flow only) that rewires `setWidthFull` / `setHeightFull` / `setSizeFull` to apply `flex: 1` instead of a literal percentage, which prevents fixed-size siblings from shrinking and also sets `min-size: 0` on nested layouts. It is **off by default** — do not assume the behavior unless the user has explicitly enabled the flag.
 
