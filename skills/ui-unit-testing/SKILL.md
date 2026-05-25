@@ -13,7 +13,7 @@ version: 0.2.0
 
 # Browserless Testing in Vaadin 25
 
-Use the Vaadin MCP tools (`search_vaadin_docs`) to look up the latest documentation whenever uncertain about a specific API detail. Always set `vaadin_version` to `"25"` and `ui_language` to `"java"`.
+Use the Vaadin MCP tools (`search_vaadin_docs`, `get_component_java_api`) to look up the latest documentation whenever uncertain about a specific API detail. Always set `vaadin_version` to `"25"` and `ui_language` to `"java"`.
 
 ## What Browserless Testing Is
 
@@ -60,6 +60,8 @@ The browserless testing framework ships in `browserless-test-junit6`. Vaadin 25 
 Extend `SpringBrowserlessTest` for Spring Boot projects (and add `@SpringBootTest`), or `BrowserlessTest` otherwise:
 
 ```java
+import com.vaadin.browserless.SpringBrowserlessTest;
+
 @SpringBootTest
 class HelloWorldViewTest extends SpringBrowserlessTest {
 
@@ -157,6 +159,9 @@ Button innerBtn = layout.$(Button.class).first();
 By default, browserless tests scan the entire classpath for routes. For faster startup, restrict to specific packages with `@ViewPackages`. Prefer the `classes()` array — it survives IDE refactors when classes move:
 
 ```java
+import org.springframework.boot.test.context.SpringBootTest;
+import com.vaadin.browserless.ViewPackages;
+
 @SpringBootTest
 @ViewPackages(classes = {MyView.class, OtherView.class})
 class MyViewTest extends SpringBrowserlessTest {
