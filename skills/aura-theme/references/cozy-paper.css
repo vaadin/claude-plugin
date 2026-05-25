@@ -1,40 +1,27 @@
-@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 
 html {
-  --aura-accent-color-dark: #34D399;
-  --aura-accent-color-light: #009966;
-  --aura-app-layout-inset: 0px;
-  --aura-background-color-dark: #18181B;
-  --aura-background-color-light: #FFFFFF;
-  --aura-base-font-size: 15;
-  --aura-base-size: 20;
-  --aura-content-color-scheme: light dark;
-  --aura-font-family: 'Atkinson Hyperlegible Next', var(--aura-font-family-system);
-  --aura-notification-color-scheme: dark;
+  --aura-accent-color-dark: #FF8904;
+  --aura-accent-color-light: #FF8904;
+  --aura-background-color-dark: #1C1917;
+  --aura-background-color-light: #F4F4F0;
+  --aura-base-font-size: 13;
+  --aura-base-radius: 4;
+  --aura-contrast-level: 0.25;
+  --aura-font-family: 'Inter', var(--aura-font-family-system);
+  --aura-overlay-surface-opacity: 1;
   --aura-surface-level: -0.5;
-  color-scheme: dark;
 }
 
-vaadin-side-nav-item:not([current]) > vaadin-icon {
-  color: var(--aura-accent-text-color);
+:is(vaadin-button, vaadin-menu-bar-button, vaadin-upload-button),
+vaadin-tabs,
+vaadin-checkbox,
+vaadin-radio-button {
+  --aura-accent-color-light: var(--aura-neutral);
+  --aura-accent-color-dark: var(--aura-neutral);
 }
 
 vaadin-side-nav-item[current]::part(content) {
   --vaadin-side-nav-item-background: var(--vaadin-background-container);
   --vaadin-side-nav-item-border-color: transparent;
-}
-
-vaadin-side-nav::part(label) {
-  text-transform: uppercase;
-  font-size: var(--aura-font-size-xs);
-  color: var(--vaadin-text-color);
-  letter-spacing: 0.03em;
-}
-
-:is(vaadin-button, vaadin-menu-bar-button, vaadin-upload-button):not([theme~="primary"], [theme~="tertiary"]) {
-  --aura-accent-color-light: var(--aura-neutral);
-  --aura-accent-color-dark: var(--aura-neutral);
-  --vaadin-button-background: var(--vaadin-background-container);
-  --vaadin-button-border-color: transparent;
-  --vaadin-button-shadow: none;
 }

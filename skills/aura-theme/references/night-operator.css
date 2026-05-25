@@ -1,40 +1,65 @@
-@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap');
 
 html {
-  --aura-accent-color-dark: #34D399;
-  --aura-accent-color-light: #009966;
+  --aura-accent-color-dark: #615FFF;
+  --aura-accent-color-light: #4F39F6;
   --aura-app-layout-inset: 0px;
-  --aura-background-color-dark: #18181B;
-  --aura-background-color-light: #FFFFFF;
-  --aura-base-font-size: 15;
+  --aura-background-color-dark: #131822;
+  --aura-background-color-light: #F1F5F9;
+  --aura-base-radius: 0;
   --aura-base-size: 20;
-  --aura-content-color-scheme: light dark;
-  --aura-font-family: 'Atkinson Hyperlegible Next', var(--aura-font-family-system);
+  --aura-content-color-scheme: dark;
+  --aura-contrast-level: 2;
+  --aura-font-family: 'Geist Mono', var(--aura-font-family-system);
   --aura-notification-color-scheme: dark;
-  --aura-surface-level: -0.5;
+  --aura-overlay-surface-opacity: 1;
+  --aura-surface-level: 2;
   color-scheme: dark;
 }
 
-vaadin-side-nav-item:not([current]) > vaadin-icon {
+html {
+  --vaadin-item-overlay-padding: var(--vaadin-padding-s) 0;
+}
+
+vaadin-tabs {
+  --vaadin-tabs-background: transparent;
+  --vaadin-tabs-border-radius: 0px;
+  --vaadin-tabs-padding: 0px;
+  --vaadin-tabs-gap: var(--vaadin-gap-l);
+  box-shadow: inset 0 -1px 0 0 var(--vaadin-border-color);
+  width: auto;
+}
+
+vaadin-tab {
+  --vaadin-tab-border-radius: 0px;
+  --vaadin-tab-border-width: 0px;
+  --vaadin-tab-padding: var(--vaadin-padding-m) 0px;
+  transition-property: color, box-shadow;
+}
+
+vaadin-tab[selected] {
+  --vaadin-tab-background: transparent;
+  --vaadin-tab-text-color: var(--aura-neutral);
+  box-shadow: inset 0 -3px 0 0 var(--aura-accent-color);
+}
+
+vaadin-side-nav-item > vaadin-icon {
   color: var(--aura-accent-text-color);
 }
 
+vaadin-side-nav-item::part(content) {
+  --vaadin-side-nav-item-border-radius: 0px;
+  --vaadin-side-nav-item-border-width: 0px;
+  margin-inline: calc(var(--vaadin-padding-m) * -1);
+  padding-inline: var(--vaadin-padding-l);
+  background-clip: border-box;
+  border-inline-start: 3px solid transparent;
+}
+
 vaadin-side-nav-item[current]::part(content) {
-  --vaadin-side-nav-item-background: var(--vaadin-background-container);
-  --vaadin-side-nav-item-border-color: transparent;
-}
-
-vaadin-side-nav::part(label) {
-  text-transform: uppercase;
-  font-size: var(--aura-font-size-xs);
-  color: var(--vaadin-text-color);
-  letter-spacing: 0.03em;
-}
-
-:is(vaadin-button, vaadin-menu-bar-button, vaadin-upload-button):not([theme~="primary"], [theme~="tertiary"]) {
-  --aura-accent-color-light: var(--aura-neutral);
-  --aura-accent-color-dark: var(--aura-neutral);
-  --vaadin-button-background: var(--vaadin-background-container);
-  --vaadin-button-border-color: transparent;
-  --vaadin-button-shadow: none;
+  --aura-surface-level: 1;
+  --aura-surface-opacity: 1;
+  --vaadin-side-nav-item-background: light-dark(var(--aura-accent-surface), var(--vaadin-background-container));
+  --vaadin-side-nav-item-text-color: var(--aura-neutral);
+  border-inline-start-color: var(--aura-accent-color);
 }
