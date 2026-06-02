@@ -8,30 +8,11 @@ This plugin provides Claude with deep knowledge about Vaadin 25 development patt
 
 ## Skills
 
-| Skill | Triggers when you ask about... |
-|-------|-------------------------------|
-| **theming** | Theme selection (Aura vs Lumo), color customization, dark mode, design tokens, component variants, utility classes |
-| **frontend-design** | Visual design, styling, animations, polished component compositions, making views look distinctive |
-| **vaadin-layouts** | HorizontalLayout, VerticalLayout, alignment, spacing, padding, flex-grow, layout sizing issues |
-| **responsive-layouts** | Mobile support, breakpoints, media queries, container queries, responsive utility classes |
-| **reusable-components** | Custom components, Composite, component APIs, HasValue, HasComponents, encapsulation |
-| **forms-and-validation** | Binder, form fields, validation, converters, required fields, cross-field validation |
-| **ui-unit-testing** | Browserless tests, BrowserlessTest, component testers, fast view testing |
-| **testbench-testing** | End-to-end tests, TestBench, page objects, ElementQuery, browser testing |
-| **data-providers** | Grid data binding, lazy loading, filtering, sorting, Spring Pageable integration |
-| **third-party-components** | Web Component wrapping, React component integration, @Tag, @NpmPackage, ReactAdapterComponent, DOM events, property sync |
-| **signals** | Reactive state, ValueSignal, NumberSignal, effects, computed signals, shared state |
-| **views-and-navigation** | Views, routes, navigation, AppLayout, router layouts, SideNav, URL parameters, master-detail |
+The skills and MCP server distributed by this marketplace live in the [vaadin/agent-skills](https://github.com/vaadin/agent-skills) repository. See that repository for the full list of skills and their documentation.
 
 ## MCP Integration
 
-This plugin includes the Vaadin MCP server, which provides:
-
-- `search_vaadin_docs` — search the official Vaadin documentation
-- `get_component_java_api` — get Java API docs for any Vaadin component
-- `get_component_styling` — get styling/theming docs for components
-- `get_full_document` — retrieve complete documentation pages
-- `get_vaadin_version` — check the latest Vaadin version
+The plugin bundles the Vaadin MCP server for real-time documentation lookups. See the [vaadin/agent-skills](https://github.com/vaadin/agent-skills) repository for details on the available MCP tools.
 
 ## Target Version
 
@@ -44,8 +25,6 @@ This plugin includes the Vaadin MCP server, which provides:
 
 ## Installation
 
-### Option 1: Install from marketplace (recommended)
-
 1. Add the marketplace:
 
    ```shell
@@ -55,19 +34,10 @@ This plugin includes the Vaadin MCP server, which provides:
 2. Install the plugin:
 
    ```shell
-   /plugin install vaadin-claude@vaadin-claude
+   /plugin install vaadin-skills@vaadin-marketplace
    ```
 
-   Or open the plugin manager with `/plugin`, go to the **Discover** tab, and select **vaadin-claude** to install interactively.
-
-### Option 2: Install from local directory
-
-Clone the repository and load it directly:
-
-```bash
-git clone https://github.com/vaadin/claude-plugin.git
-claude --plugin-dir ./claude-plugin
-```
+   Or open the plugin manager with `/plugin`, go to the **Discover** tab, and select **vaadin-skills** to install interactively.
 
 ## Usage
 
@@ -83,10 +53,10 @@ The skills and MCP tools activate automatically based on conversation context. A
 
 ### Updating
 
-If you installed from the marketplace, update by running:
+Update the marketplace catalog by running:
 
 ```shell
-/plugin marketplace update vaadin-claude-plugin
+/plugin marketplace update vaadin-marketplace
 ```
 
 Or enable auto-updates in the plugin manager under the **Marketplaces** tab.
