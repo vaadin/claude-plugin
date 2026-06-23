@@ -1,5 +1,23 @@
 # Vaadin Claude Plugin
 
+> [!IMPORTANT]
+> **This marketplace is deprecated and will eventually be retired.**
+> Please switch to the new [vaadin/agent-marketplace](https://github.com/vaadin/agent-marketplace),
+> which serves the same skills and MCP tools for both **Claude Code** and **Codex**.
+>
+> ```shell
+> /plugin marketplace add vaadin/agent-marketplace
+> /plugin install vaadin-skills@vaadin-marketplace
+> ```
+>
+> If you previously installed from this repository, remove it and re-add the new
+> marketplace:
+>
+> ```shell
+> /plugin marketplace remove vaadin-marketplace
+> /plugin marketplace add vaadin/agent-marketplace
+> ```
+
 Skills and tools for building high-quality Vaadin 25 applications with Java/Flow.
 
 ## Overview
@@ -25,10 +43,12 @@ The plugin bundles the Vaadin MCP server for real-time documentation lookups. Se
 
 ## Installation
 
+Install from the new [vaadin/agent-marketplace](https://github.com/vaadin/agent-marketplace) (recommended):
+
 1. Add the marketplace:
 
    ```shell
-   /plugin marketplace add vaadin/claude-plugin
+   /plugin marketplace add vaadin/agent-marketplace
    ```
 
 2. Install the plugin:
@@ -38,6 +58,8 @@ The plugin bundles the Vaadin MCP server for real-time documentation lookups. Se
    ```
 
    Or open the plugin manager with `/plugin`, go to the **Discover** tab, and select **vaadin-skills** to install interactively.
+
+> The legacy `vaadin/claude-plugin` marketplace still works for now, but is deprecated and will eventually be retired. Prefer the marketplace above.
 
 ## Usage
 
