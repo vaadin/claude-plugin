@@ -10,12 +10,15 @@
 > /plugin install vaadin-skills@vaadin-marketplace
 > ```
 >
-> If you previously installed from this repository, remove it and re-add the new
-> marketplace:
+> If you previously added this repository, remove it first. Both marketplaces are
+> named `vaadin-marketplace`, so Claude Code refuses the `add` with *"its network
+> source differs from the one declared for it in settings"* until the old entry
+> is gone. Removing the marketplace also disables the plugin, so install it again:
 >
 > ```shell
 > /plugin marketplace remove vaadin-marketplace
 > /plugin marketplace add vaadin/agent-marketplace
+> /plugin install vaadin-skills@vaadin-marketplace
 > ```
 
 Skills and tools for building high-quality Vaadin 25 applications with Java/Flow.
